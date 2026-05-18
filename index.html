@@ -1,0 +1,2787 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Gigging Companion — WN Catalyst Gig 4</title>
+<style>
+  :root {
+    --bg: #faf9f6;
+    --panel: #ffffff;
+    --fg: #1a1d22;
+    --muted: #6b7280;
+    --accent: #d97706;
+    --highlight: rgba(217,119,6,0.12);
+    --chord: #1d4ed8;
+    --section: #b45309;
+    --border: #e5e7eb;
+    --chip-bg: #f3f4f6;
+    --beat-idle: #d1d5db;
+    --draft: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", sans-serif;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: auto auto auto 1fr auto;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Left sidebar table of contents */
+  .toc-sidebar {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    background: #f5f3f0;
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .toc-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .toc-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .toc-toggle {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--fg);
+    padding: 4px 8px;
+    display: none;
+    border-radius: 6px;
+  }
+
+  .toc-toggle:hover {
+    background: var(--chip-bg);
+  }
+
+  .toc-content {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .toc-set-title {
+    padding: 8px 14px;
+    font-weight: 600;
+    color: #374151;
+    background: #ede9e4;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .toc-set.current .toc-set-title {
+    background: var(--accent);
+    color: #ffffff;
+  }
+
+  .toc-songs {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .toc-song {
+    padding: 6px 20px;
+    cursor: pointer;
+    color: #4b5563;
+    user-select: none;
+    font-size: 13px;
+    transition: background 0.12s;
+  }
+
+  .toc-song:hover {
+    background: #e5dfd8;
+  }
+
+  .toc-song.current {
+    background: #fef3c7;
+    color: #1f2937;
+    font-weight: 500;
+  }
+
+  /* Gig bar — top strip with gig name + set tabs */
+  .gigbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 20px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+  }
+  .gig-name { font-weight: 700; font-size: 15px; }
+  .set-tabs { display: flex; gap: 4px; }
+  .set-tab {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--muted);
+    padding: 6px 14px;
+    border-radius: 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .set-tab:hover { background: var(--chip-bg); }
+  .set-tab.active {
+    background: var(--accent);
+    color: #ffffff;
+  }
+  .song-picker-wrap { margin-left: auto; position: relative; }
+  .song-picker-btn {
+    background: var(--chip-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--fg);
+  }
+  .song-picker-menu {
+    position: absolute;
+    right: 0; top: calc(100% + 4px);
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+    padding: 6px;
+    min-width: 280px;
+    max-height: 60vh;
+    overflow-y: auto;
+    z-index: 10;
+    display: none;
+  }
+  .song-picker-menu.open { display: block; }
+  .picker-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .picker-item:hover { background: var(--chip-bg); }
+  .picker-item.current { background: var(--highlight); }
+  .picker-num { color: var(--muted); min-width: 22px; text-align: right; }
+  .picker-title { flex: 1; }
+  .picker-badge {
+    font-size: 10px;
+    background: var(--draft);
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  /* Song / control top bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 20px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .song-meta { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+  .song-title { font-size: 18px; font-weight: 600; }
+  .song-artist { color: var(--muted); font-size: 14px; }
+  .song-pos { color: var(--muted); font-size: 12px; margin-left: 6px; }
+  .draft-badge {
+    background: var(--draft);
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 8px;
+    margin-left: 4px;
+  }
+  .meta-chip {
+    background: var(--chip-bg);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .meta-chip strong { color: var(--fg); margin-left: 4px; }
+
+  .btn {
+    background: #ffffff;
+    color: var(--fg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .btn:hover { background: var(--chip-bg); border-color: #d1d5db; }
+  .btn:active { transform: translateY(1px); }
+  .btn.active { background: var(--accent); color: #ffffff; border-color: var(--accent); }
+  .btn.primary { background: var(--accent); color: #ffffff; border-color: var(--accent); font-weight: 600; }
+  .btn.icon { padding: 8px 14px; font-size: 18px; min-width: 44px; }
+
+  .transpose { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+  .song-switcher { display: flex; gap: 6px; }
+
+  /* Beat-dots metronome */
+  .beats {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 14px;
+    background: var(--chip-bg);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+  .beat {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--beat-idle);
+    transition: background 80ms ease, transform 80ms ease, box-shadow 80ms ease;
+  }
+  .beat.downbeat { width: 16px; height: 16px; }
+  .beat.active { background: var(--accent); transform: scale(1.15); }
+  .beat.downbeat.active { box-shadow: 0 0 12px rgba(217,119,6,0.55); }
+
+  /* Progress strip */
+  .progress-strip {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .progress-track {
+    flex: 1; height: 5px;
+    background: var(--chip-bg);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 80ms linear;
+  }
+  .progress-time {
+    font-size: 12px; color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    min-width: 44px;
+  }
+  .progress-time.remaining { text-align: right; }
+
+  /* Chart */
+  .chart-wrap { flex: 1; overflow: hidden; position: relative; }
+  .chart {
+    height: 100%;
+    overflow-y: auto;
+    padding: 12vh 28px 60vh;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 22px;
+    line-height: 1.5;
+  }
+  .chart::-webkit-scrollbar { width: 6px; }
+  .chart::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+  .line {
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.18s;
+  }
+  .line.active { background: var(--highlight); }
+  .line.section {
+    color: var(--section);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 13px;
+    margin-top: 22px;
+    padding-top: 6px;
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+  .line.comment {
+    color: var(--muted);
+    font-style: italic;
+    font-size: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    margin-top: 8px;
+  }
+  .line.blank { height: 14px; }
+  .chord-row { color: var(--chord); font-weight: 700; white-space: pre; }
+  .lyric-row { white-space: pre; }
+
+  .playhead {
+    position: absolute;
+    left: 0; right: 0;
+    top: 12%;
+    height: 0;
+    border-top: 1px dashed rgba(217,119,6,0.30);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Draft empty-state */
+  .draft-card {
+    margin: 40px auto;
+    max-width: 520px;
+    padding: 28px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+  .draft-card .label {
+    background: var(--draft);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 4px 10px;
+    border-radius: 10px;
+    display: inline-block;
+  }
+  .draft-card h2 { margin: 14px 0 6px; font-size: 22px; }
+  .draft-card p { color: var(--muted); margin: 6px 0; font-size: 14px; }
+  .draft-card .ref {
+    margin-top: 14px;
+    background: var(--chip-bg);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 13px;
+    color: var(--fg);
+    word-break: break-all;
+  }
+
+  /* Footer */
+  .footer {
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .controls .sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+  .speed-row {
+    display: flex; align-items: center; gap: 12px;
+    color: var(--muted); font-size: 13px;
+  }
+  .speed-row input[type=range] { flex: 1; max-width: 320px; accent-color: var(--accent); }
+  .help { color: var(--muted); font-size: 11px; text-align: right; }
+  .help kbd {
+    background: var(--chip-bg); border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 5px;
+    font-size: 10px; color: var(--fg);
+  }
+
+  /* Set complete modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(15,20,25,0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 32px 36px;
+    width: min(440px, 90vw);
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+  .modal-title { font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; }
+  .modal-subtitle { font-size: 22px; font-weight: 700; margin: 10px 0 6px; }
+  .modal-meta { color: var(--muted); font-size: 14px; margin-bottom: 22px; }
+  .modal-buttons { display: flex; gap: 10px; justify-content: center; }
+
+  /* Main content area spans column 2 */
+  .gigbar, .topbar, .progress-strip, .chart-wrap, .footer {
+    grid-column: 2;
+  }
+
+  /* Mobile: sidebar becomes slide-in drawer */
+  @media (max-width: 767px) {
+    body {
+      grid-template-columns: 1fr;
+    }
+
+    .toc-sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      height: 100vh;
+      width: 280px;
+      z-index: 999;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease-out;
+      grid-column: auto;
+      grid-row: auto;
+    }
+
+    .toc-sidebar.open {
+      transform: translateX(0);
+    }
+
+    .toc-toggle {
+      display: block;
+    }
+
+    .gigbar, .topbar, .progress-strip, .chart-wrap, .footer {
+      grid-column: 1;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .toc-toggle {
+      display: none;
+    }
+  }
+</style>
+</head>
+<body>
+  <!-- Left sidebar table of contents -->
+  <div class="toc-sidebar" id="toc-sidebar">
+    <div class="toc-header">
+      <h3 id="tocGigName">Gig</h3>
+      <button class="toc-toggle" id="toc-toggle" aria-label="Toggle sidebar">≡</button>
+    </div>
+    <div class="toc-content" id="toc-content"></div>
+  </div>
+
+  <!-- Gig bar -->
+  <div class="gigbar">
+    <div class="gig-name" id="gigName">—</div>
+    <div class="set-tabs" id="setTabs"></div>
+    <div class="song-picker-wrap">
+      <button class="song-picker-btn" id="songPickerBtn">Songs in set ▾</button>
+      <div class="song-picker-menu" id="songPickerMenu"></div>
+    </div>
+  </div>
+
+  <!-- Song top bar -->
+  <div class="topbar">
+    <div class="song-meta">
+      <div class="song-title" id="songTitle">—</div>
+      <div class="song-artist" id="songArtist"></div>
+      <div class="song-pos" id="songPos"></div>
+      <span class="draft-badge" id="draftBadge" hidden>DRAFT</span>
+    </div>
+    <div class="meta-chip">Key<strong id="songKey">—</strong></div>
+    <div class="meta-chip">BPM<strong id="songBpm">—</strong></div>
+    <div class="meta-chip">Time<strong id="songTime">4/4</strong></div>
+    <div class="beats" id="beats"></div>
+    <div class="transpose">
+      <span class="meta-chip">Transpose<strong id="transOffset">0</strong></span>
+      <button class="btn icon" id="transDown">−</button>
+      <button class="btn icon" id="transUp">+</button>
+    </div>
+    <div class="song-switcher">
+      <button class="btn" id="prevSong">‹ Prev</button>
+      <button class="btn" id="nextSong">Next ›</button>
+    </div>
+  </div>
+
+  <!-- Progress strip -->
+  <div class="progress-strip">
+    <span class="progress-time" id="elapsedTime">0:00</span>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-time remaining" id="remainingTime">-0:00</span>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-wrap">
+    <div class="playhead"></div>
+    <div class="chart" id="chart"></div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="controls">
+      <button class="btn" id="playBtn">▶ Play</button>
+      <button class="btn" id="restartBtn">⟲ Restart</button>
+      <div class="sep"></div>
+      <button class="btn" data-section="verse">Verse</button>
+      <button class="btn" data-section="chorus">Chorus</button>
+      <button class="btn" data-section="bridge">Bridge</button>
+    </div>
+    <div class="speed-row">
+      <span>Scroll speed</span>
+      <input type="range" id="speedSlider" min="10" max="120" value="36" />
+      <span id="speedLabel">36 px/s</span>
+      <span class="help" style="margin-left:auto">
+        <kbd>Space</kbd> play · <kbd>+</kbd>/<kbd>−</kbd> transpose · <kbd>N</kbd>/<kbd>P</kbd> next/prev
+      </span>
+    </div>
+  </div>
+
+  <!-- Set complete modal -->
+  <div class="modal-overlay" id="setCompleteModal">
+    <div class="modal-card">
+      <div class="modal-title">Set Complete</div>
+      <div class="modal-subtitle" id="modalSubtitle"></div>
+      <div class="modal-meta" id="modalMeta"></div>
+      <div class="modal-buttons">
+        <button class="btn" id="modalCancel">Stay on song</button>
+        <button class="btn primary" id="modalStart">Start next set</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ============================================================
+//  Gigging Companion — WN Catalyst Gig 4
+//  Gig > Set > Song hierarchy, two-line chord-over-lyric parser,
+//  set tabs, end-of-set handoff, draft placeholders.
+// ============================================================
+
+// ----- THE GIG -----------------------------------------------
+const GIG = {
+  name: "WN Catalyst — Gig 4",
+  sets: [
+    {
+      name: "Set 1",
+      songs: [
+        {
+          title: "The Emptiness Machine", artist: "Linkin Park",
+          key: "D", bpm: 84, time: "4/4",
+          chordPro: `
+Intro
+D
+
+Verse 1
+D                       Gm
+ Your blades are sharpened with precision
+D                       C
+ Flashing your favorite point of view
+D                       Gm
+ I know you're waiting in the distance
+D                       C
+Just like you always do, just like you always do
+
+Pre-Chorus
+Bb
+  Already pulling me in
+F
+ Already under my skin
+C
+ And I know exactly how this ends, I
+
+Chorus
+            D                  Gm
+Let you cut me open just to watch me bleed
+            Bb       F        C
+Gave up who I am  for who you wanted me to be
+                D                   Gm
+Don't know why I'm hopin' for what I won't receive
+               Bb       F        C
+Fallin' for the promise of the emptiness machine
+            D
+The emptiness machine
+
+Interlude
+D Gm Bb F C
+
+Verse 2
+D                       Gm
+ Goin' around like a revolver
+D                       C
+ It's been decided how we lose
+D                            Gm
+ 'Cause there's a fire under the altar
+D                       C
+ I keep on lyin' to, I keep on lyin' to
+
+Pre-Chorus
+Bb
+  Already pulling me in
+F
+ Already under my skin
+C
+ And I know exactly how this ends, I
+
+Chorus
+            D                  Gm
+Let you cut me open just to watch me bleed
+            Bb       F        C
+Gave up who I am  for who you wanted me to be
+                D                   Gm
+Don't know why I'm hopin' for what I won't receive
+               Bb       F        C
+Fallin' for the promise of the emptiness machine
+
+Bridge
+D            Gm
+ I only wanted to be part of something
+Bb     F          C
+ I only wanted to be part of, part of
+D            Gm
+ I only wanted to be part of something
+Bb     F          C
+ I only wanted to be part of, part of
+D            Gm
+ I only wanted to be part of something
+Bb     F          C
+ I only wanted to be part
+
+Last Chorus
+             D                  Gm
+I let you cut me open just to watch me bleed
+            Bb       F          C
+Gave up who I am  for who you wanted me to be
+                D                   Gm
+Don't know why I'm hopin', so fuckin' naive
+               Bb       F          C
+Fallin' for the promise of the emptiness machine
+The emptiness machine
+
+Outro
+D Gm
+        Bb F  C
+The emptiness machine,    oh
+          D
+The emptiness machine
+`.trim()
+        },
+        {
+          title: "Immortals", artist: "Fall Out Boy",
+          key: "E", bpm: 89, time: "4/4",
+          draft: true,
+          draftNote: "Only chord skeleton known. Verse: E C · Chorus: E C G D",
+        },
+        {
+          title: "Die with a Smile", artist: "Lady Gaga & Bruno Mars",
+          key: "B", bpm: 78, time: "4/4",
+          draft: true,
+          draftNote: "Bass tabs only in source. Guitar chord chart pending.",
+        },
+        {
+          title: "孤勇者", artist: "陈奕迅",
+          key: "E", bpm: 89, time: "4/4",
+          chordPro: `
+Intro
+E F# G# x 3 (enter on 3rd one)
+E F# C#
+
+Verse 1
+G#
+都  是勇敢的
+            E              F#
+你额头的伤口 你的 不同 你犯的错
+G#
+都 不必隐藏
+            E              F#
+你破旧的玩偶 你的 面具 你的自我
+
+Verse 1 (enter)
+E         F#          G#
+他们说 要带着光 驯服每一头怪兽
+   E        F#          G#
+他们说 要缝好你的伤 没有人爱小丑
+   E       F#
+为何孤独 不可 光荣
+            G#         F#
+人只有不完美 值得歌颂
+       E    F#       G#
+谁说污泥满身的不算英雄
+
+Chorus
+      E
+爱你孤身走暗巷
+      F#
+爱你不跪的模样
+      G#
+爱你对峙过绝望
+     F#
+不肯哭一场
+      E
+爱你破烂的衣裳
+      F#
+却敢堵命运的枪
+      G#
+爱你和我那么像
+     F#
+缺口都一样
+
+   E    F#
+去吗 配吗 这褴褛的披风
+   G#       F#
+战吗 战啊 以最卑微的梦
+     E    F#       G# F#
+致那黑夜中的呜咽与怒吼
+谁说站在光里的才算英雄
+
+Verse 2
+    A     B         C# B
+他们说 要戒了你的狂 就像擦掉了污垢
+    A    B           C# B
+他们说 要顺台阶而上 而代价是低头
+   A     B
+那就让我 不可 乘风
+        C#       B
+你一样骄傲着 那种孤勇
+   A    B    F#
+谁说对弈平凡的不算英雄
+
+Chorus
+      A
+爱你孤身走暗巷
+      B
+爱你不跪的模样
+      C#
+爱你对峙过绝望
+     B
+不肯哭一场
+      A
+爱你破烂的衣裳
+      B
+却敢堵命运的枪
+      C#
+爱你和我那么像
+     B
+缺口都一样
+
+   A    B
+去吗 配吗 这褴褛的披风
+   C#       B
+战吗 战啊 以最卑微的梦
+     A    B       C# B
+致那黑夜中的呜咽与怒吼
+谁说站在光里的才算英雄
+
+Bridge
+C#  C     B F#
+你的斑驳 与众不同
+C#   D#   E   F#
+你的沉默 震耳欲聋
+
+Interlude
+D# (E C# D#)
+E
+D#
+
+Last Chorus
+      E
+爱你孤身走暗巷
+      F#
+爱你不跪的模样
+      G#
+爱你对峙过绝望
+     F#
+不肯哭一场
+      E
+爱你来自于蛮荒
+     F#
+一生不借谁的光
+      G#
+你将造你的城邦
+     F#  B
+在 废墟之上
+
+   E    F#
+去吗 去啊 以最卑微的梦
+   G#       F#
+战吗 战啊 以最孤高的梦
+     E    F#     G# F#
+致那黑夜中的呜咽与怒吼
+     E    F#       G#
+谁说站在光里的才算英雄
+     E    F#
+谁说站在光里的才算英雄
+
+Ending
+E F# G#
+E F# C#
+`.trim()
+        },
+        {
+          title: "Locked Out of Heaven", artist: "Bruno Mars",
+          key: "D", bpm: 144, time: "4/4",
+          draft: true,
+          draftNote: "Play half-step down. Reference: tabs.ultimate-guitar.com/tab/bruno-mars/locked-out-of-heaven-official-2205077",
+        },
+        {
+          title: "看着我的眼睛说", artist: "—",
+          key: "A", bpm: 78, time: "4/4",
+          chordPro: `
+Intro
+A C# B D
+
+Verse 1
+今天你生日我准备了好多
+也把惊喜偷偷藏口袋左侧
+只等你回家 我就陪你过
+再把准备很久的话对你说
+
+天空好像隐隐要下起雨了
+我们坐在沙发上彼此沉默
+我问你为什么说分手 是我哪有错
+你说我很好 只是他回来了
+
+Chorus
+       A             E/G#    C#
+来 你看着我的眼睛说 你从没爱过我
+   F#                C#
+再看着我的眼睛说 你一点都不难过
+       D    E      C#   F#
+我虽然没那么懂事 但绝不拦你这一次
+       B          E
+如果你说 想要回到有他在的城市
+
+       A             E/G#    C#
+来 你看着我的眼睛说 你从没爱过我
+   F#                C#
+再看着我的眼睛说 你一点都不难过
+       D   E      C#    F#
+我攥紧手里的戒指 它本该有一个名字
+        B               E
+如果你生日愿望是回到他身旁 我帮你这最后一次
+
+Interlude
+A C# C G#
+
+Verse 2
+D#         D
+明明说好去看好多风景的
+C       G
+吹着海风听你最爱听的歌
+
+G#   A#  G   C
+可那些承诺 换个人也能做
+F          A#
+他凭什么这么简单就能赢了我
+
+Chorus
+       D#            A#/D   G
+来 你看着我的眼睛说 你从没爱过我
+   C                 A#  D#
+再看着我的眼睛说 你一点都不难过
+    G#  A#    G     C
+我虽然没那么懂事 但绝不拦你这一次
+       F        A#
+如果你说 想要回到有他在的城市
+
+       D#            A#/D   G
+来 你看着我的眼睛说 你从没爱过我
+   C                 A#   D#
+再看着我的眼睛说 你一点都不难过
+    G#  A#    G     C
+我攥紧手里的戒指 它本该有一个名字
+        F            A#
+如果你生日愿望是回到他身旁 我帮你这最后一次
+
+Solo
+G# G C F C# A#
+
+Last Chorus
+       D#            A#/D
+来 你看着我的眼睛说 再看着我的眼睛说
+(enter)
+   C            G
+你看着我的眼睛说 你从没爱过我
+
+       G#  A#     G   C
+那是段美好的回忆 只是差了一个结局
+       F          A#
+请记得我曾认认真真的爱过
+        D#
+该遗憾的不是我
+
+Ending
+D# F G# D#
+`.trim()
+        },
+        {
+          title: "不该", artist: "周杰伦 ft. 张惠妹",
+          key: "E", bpm: 85, time: "4/4",
+          chordPro: `
+Chord Overview
+
+Verse 1
+E F# A E
+C# F# A E
+
+Pre-Chorus
+C G
+F# B E D
+C B
+A B
+
+Chorus
+E D# G#
+C# B E
+A B G# C#
+F# B
+
+Interlude
+E A C#m A
+
+Verse 2
+C# F# A E
+
+Last Chorus
+(enter on 下个最爱...)
+B E
+A B G# C#
+F# B
+
+Ending
+E F# A E
+
+Intro
+E C G D x 2
+
+Verse 1
+E            F#   Am      E
+假装我们还在一块 我真的演不出来
+  C#m   F#       Am  E
+还是不习惯你不在 这身份转变太快
+E             F#   Am   E
+画面里不需要旁白 却谁都看得出来
+  C#m   F#  Am   E
+是我情绪涌了上来 想哭却一片空白
+
+Pre-Chorus
+C                       Gmaj7
+雪地里相爱 他们说零下 已结晶的誓言不会坏
+F#m         B          Em       D
+但爱的状态 却不会永远 都冰封而透明的存在
+       Cmaj7              Bm7
+轻轻飘 落下来 许下的梦 融化得太快
+   Am7         B7
+或许我们都不该醒来
+
+Chorus
+       E            D#m    G#
+你还是住在我的回忆里 不出来
+            C#m         Bm7    E7
+让我们微笑离开 让故事留下来
+       A       B
+放手后 爱依然在
+        G#m  C#m
+雪融了 就应该花开
+F#m7              B
+缘若尽了 就不该再重来
+
+       E             D#m    G#
+你依旧住在我的回忆里 不出来
+            C#m         Bm7    E7
+我离开将你的手交给 下个最爱
+       A      B      G#m   C#m
+纠缠与固执等待 反而是另一种伤害
+F#m7           B
+彼此紧握的手松开 去拥抱更多未来
+
+Interlude
+E A C#m A
+
+Verse 2
+E              F#  Am      E
+错过的时间怎么买 谁都付不出来
+  C#m   F#   Am   E
+或许我们学会释怀 让过去安静下来
+
+Pre-Chorus
+C                       Gmaj7
+雪地里相爱 他们说零下 已结晶的誓言不会坏
+F#m         B          Em       D
+但爱的状态 却不会永远 都冰封而透明的存在
+       Cmaj7              Bm7
+轻轻飘 落下来 许下的梦 融化得太快
+   Am7         B7
+或许我们都不该醒来
+
+Last Chorus
+       E             D#m    G#
+你还是住在我的回忆里 不出来
+            C#m         Bm7    E7
+让我们微笑离开 让故事留下来
+       A       B
+放手后 爱依然在
+        G#m  C#m
+雪融了 就应该花开
+F#m7              B
+缘若尽了 就不该再重来
+
+       E             D#m    G#
+你依旧住在我的回忆里 不出来
+            C#m         Bm7    E7
+我离开将你的手交给 下个最爱
+       A      B      G#m   C#m
+纠缠与固执等待 反而是另一种伤害
+F#m7           B       E
+彼此紧握的手松开 去拥抱更多未来
+`.trim()
+        },
+        {
+          title: "Birds of a Feather", artist: "Billie Eilish",
+          key: "G", bpm: 104, time: "4/4",
+          draft: true,
+          draftNote: "Chord skeleton from video reference only: D B E A",
+        },
+        {
+          title: "Free + What it Sounds Like + Golden", artist: "KPop Demon Hunters",
+          key: "G#m", bpm: 140, time: "4/4",
+          chordPro: `
+Verse (Free)
+I tried to hide but something broke
+I tried to sing, couldn't hit the notes
+The words kept catching in my throat
+I tried to smile, I was suffocating though
+But here with you, I can finally breathe
+You say you're no good, but you're good for me
+I've been hoping to change, now I know we can change
+But I won't if you're not by my side
+
+Chorus (Free)
+            F#
+Why does it feel right every time I let you in?
+G#         A#
+Why does it feel like I can tell you anything?
+        G#                  D#
+All the secrets that keep me in chains, and
+       G#
+All the damage that might make me dangerous
+F          F#
+You got a dark side, guess you're not the only one
+G#         A#
+What if we both tried fighting what we're running from?
+        G#               Octave G#
+We can't fix it if we never face it
+        G#
+What if we find a way to escape it?
+
+F        F#  G#  A#
+We could be free, free
+        G#              Octave G#
+We can't fix it if we never face it
+        G#                          F (F# to fade)
+Let the past be the past 'til it's weightless
+
+Verse (What it Sounds Like)
+We're shattering the silence, we're rising defiant
+Shouting in the quiet, you're not alone
+We listened to the demons, we let them get between us
+But none of us are out here on our own
+
+(enter)
+A            B
+So, we were cowards, so, we were liars
+G#m            C#m
+So, we're not heroes, we're still survivors
+    A            B
+The dreamers, the fighters, no lying, I'm tired
+   G#m                       A
+But dive in the fire and I'll be right here by your side
+
+Chorus (What it Sounds Like)
+A             C#m         B
+We broke into a million pieces, and we can't go back
+But now we're seeing all the beauty in the broken glass
+A           C#m
+The scars are part of me, darkness and harmony
+B                G#m
+My voice without the lies, this is what it sounds like
+A          C#m       B
+Why did we cover up the colors stuck inside our head?
+Get up and let the jagged edges meet the light instead
+A             C#m
+Show me what's underneath, I'll find your harmony
+B               G#m
+Fearless and undefined, this is what it sounds like
+
+Bridge (What it Sounds Like)
+A                      C#m
+Truth after all this time, our voices all combined
+B                          G#m
+When darkness meets the light, this is what it sounds like
+
+Transition
+A B G#m A x 2
+C# D# E F# x 2
+
+Verse 1 (Golden)
+A          E
+ I was a ghost, I was alone
+   B       C#m
+어두워진 앞길 속에 (ah)
+A          E
+ Given the throne I didn't know
+    B
+how to believe
+       C#m
+I was the queen that I'm meant to be
+   A         E
+I lived two lives, tried to play both sides
+   B          C#m
+But I couldn't find my own place
+        A          E
+Called a problem child 'cause I got too wild
+   B            C#m
+But now that's how I'm getting paid, 끝없이 on stage
+
+Pre-Chorus (Golden)
+A         E
+I'm done hidin', now I'm shinin'
+B           C#m
+Like I'm born to be
+    A           E
+We're dreamin' hard, we came so far
+   B
+Now I believe
+       A
+We're goin' up, up, up
+
+Chorus (Golden)
+       B
+It's our moment
+            E
+You know together we're glowin'
+B/D#       C#m
+Gonna be, gonna be golden
+   A
+Oh, up, up, up
+      B
+With our voices
+       E
+영원히 깨질 수 없는
+B/D#       C#m
+Gonna be, gonna be golden
+   A      B
+Oh, I'm done hidin' now I'm shinin'
+E    B/D#  C#m
+Like I'm born to be
+  A     B
+Oh, our time, no fear, no lies
+    E    B/D#  C#m
+That's who we're born to be
+
+Verse 2 (Golden)
+    C#m         B
+Waited so long to break these walls down
+     G#m7   Amaj7
+To wake up and feel like me
+     E/G#       B/F#
+Put these patterns all in the past   now
+       G#m7         Amaj7
+And finally live like the girl they all see
+
+Pre-Chorus (Golden)
+C#m       B
+No more hiding, I'll be shinin'
+G#m7
+Like I'm born to be
+Amaj7  C#m       G#m7
+   'Cause we are hunters, voices strong
+  Amaj7    B
+And I know I believe
+       A
+We're goin' up, up, up
+
+Chorus (Golden)
+       B
+It's our moment
+            E
+You know together we're glowin'
+B/D#       C#m
+Gonna be, gonna be golden
+   A
+Oh, up, up, up
+      B
+With our voices
+       E
+영원히 깨질 수 없는
+B/D#       C#m
+Gonna be, gonna be golden
+   A      B
+Oh, I'm done hidin' now I'm shinin'
+E    B/D#  C#m
+Like I'm born to be
+   A      B
+Oh, our time, no fear, no lies
+    E    B/D#  C#m
+That's who we're born to be
+
+Post-Chorus (Golden)
+       A
+You know we're gonna be, gonna be golden
+   B
+We're gonna be, gonna be
+E             B/D#
+Born to be, born to be glowin'
+   C#m
+밝게 빛나는 우린
+       A         B
+You know that it's our time, no fears, no lies
+    E    B/D#  C#m
+That's who we're born to be
+
+Outro (Golden)
+A E B C#m
+A E B C#m
+`.trim()
+        }
+      ]
+    },
+    {
+      name: "Set 2",
+      songs: [
+        {
+          title: "I Want It That Way", artist: "Backstreet Boys",
+          key: "A", bpm: 99, time: "4/4",
+          draft: true,
+          draftNote: "Reference: tabs.ultimate-guitar.com/tab/backstreet-boys/i-want-it-that-way-official-2099033",
+        },
+        {
+          title: "Baby One More Time", artist: "Britney Spears (Rock Version)",
+          key: "Dm", bpm: 93, time: "4/4",
+          draft: true,
+          draftNote: "Partial chord summary only. Core: D A F · G A · Bridge: A# C A# G (A) · Last Chorus: D A F Gm A / A# C A# G C (C#)",
+        },
+        {
+          title: "泪海", artist: "—",
+          key: "D#", bpm: 78, time: "4/4",
+          chordPro: `
+Intro
+D# B C# D#
+
+Verse
+D#                C
+愛已不能動 還有什麼值得我心痛
+F     A#         D#
+想你的天空 下起雨來
+     C       G
+沒人心疼的黑夜
+    G#  A#       D#
+臉頰兩行鹹鹹的淚水
+       G#    G
+是你 哦是你
+   F          A#
+讓我望穿淚水 肝腸寸斷
+
+Chorus
+D#         D       C A#
+你怎麼捨得讓我的淚流向海
+         G#  G   F A#
+付出的感情永遠 找不回來
+D#         D       C A#
+你怎麼捨得讓我的愛流向海
+         G#  G   F A#
+傷心的往事一幕幕就像潮水
+        D#
+將我淹埋
+
+Repeat Verse
+Repeat Chorus
+
+Bridge
+G          C
+閉上了雙眼 還看見和你的纏綿
+G          G#
+眼角的淚水 洗不去心中
+F A#
+一遍一遍的誓言
+
+Last Chorus (enter on D# but quickly go to C#)
+E          D#        C# B
+你怎麼捨得讓我的淚流向海
+       A   G#   F#  B
+付出的感情永遠 找不回來
+E          D#       C# B
+你怎麼捨得讓我的愛流向海
+       A   G#  F#  B
+傷心的往事一幕幕就像潮水
+       E
+將我淹埋
+
+Ending
+Repeat Chorus
+`.trim()
+        },
+        {
+          title: "过火", artist: "张信哲",
+          key: "C#", bpm: 75, time: "4/4",
+          chordPro: `
+Intro
+A B G# C#
+A B C#
+
+Verse
+C#                  G#
+是否对你承诺了太多 还是我原本给的就不够
+A           B          E
+你始终有千万种理由 我一直都跟随你的感受
+
+Verse 1 (enter)
+F#      B (A) G#       C#
+让你疯 让你去放纵 以为你 有天会感动
+   F#     G#       C#
+关于流言 我装作无动于衷
+
+C#                G#
+直到所有的梦已破碎 才看见你的眼泪和后悔
+A              B           E
+我是多想再给你机会 多想问你究竟 爱谁
+F#     B (A) G#        C#
+既然爱 难分是非 就别逃避 勇敢面对
+   F#       G#      C#
+给了他的心 你是否能够 要得回
+
+Chorus
+       C# F#    B           E
+怎么忍心怪你 犯了错 是我给你自由 过了火
+A    B       E         G#
+让你更寂寞 才会陷入感情漩涡
+       C# F#    B           E
+怎么忍心让你受折磨 是我给你自由 过了火
+A    B         C#
+如果你想飞 伤痛我捎
+
+Interlude
+C# F# B E
+A B C#
+
+Repeat Verse
+Repeat Chorus
+
+Last Chorus
+怎么忍心怪你 犯了错 是我给你自由 过了火
+(enter)
+       E          G#
+让你更寂寞 才会陷入感情漩涡
+        C# F#    B           E
+怎么忍心让你受折磨 是我给你自由 过了火
+A    B         C#
+如果你想飞 伤痛我捎
+`.trim()
+        },
+        {
+          title: "用心良苦", artist: "张宇",
+          key: "G", bpm: 78, time: "4/4",
+          chordPro: `
+Verse (enter on verse 2 onwards)
+G       C
+妳的脸有几分憔悴
+G       C
+妳的眼有残留的泪
+G    C   G    (B C D E D)
+妳的唇美丽中有疲惫
+G       C
+我用去整夜的时间
+G       C
+想分辨在妳我之间
+G    C   G    (G C D E)
+到底谁会爱谁多一点
+
+Pre-Chorus
+Bm      Em
+我宁愿看著妳
+Bm7      Em
+睡的如此沉静
+Am   Bm7    Am7   C D
+胜过妳醒时决裂般无情
+
+Chorus
+   G   Bm7  Em  Bm7
+妳说妳 想要逃 偏偏注定要落脚
+  Am7  Bm7  C  D
+情灭了 爱熄了 剩下空心要不要
+   G   Bm7  Em  Bm7
+春已走 花又落 用心良苦却成空
+  Am7  Bm7  C  G
+我的痛 怎么形容 一生爱 错放妳的手
+
+Solo
+D (C B) A
+D (C B) A
+B A G (F#) G
+(E F#)
+
+Last Chorus
+Repeat normal then up key
+
+(C# D#)
+    G#   Cm7   Fm   Cm7
+妳说妳 想要逃 偏偏注定要落脚
+  Bbm7  Cm7   C#   D#
+情灭了 爱熄了 剩下空心要不要
+   G#   Cm7   Fm   Cm7
+春已走 花又落 用心良苦却成空
+  Bbm7  Cm7   C#   D#  G#
+我的痛 怎么形容 一生爱 错放妳的手
+
+  Bbm7  Cm7   C#   D#  G#
+我的痛 怎么形容 一生爱 错放妳的手
+`.trim()
+        },
+        {
+          title: "All Star", artist: "Smash Mouth",
+          key: "A", bpm: 104, time: "4/4",
+          draft: true,
+          draftNote: "Bass tab only in source. Guitar chord chart pending.",
+        },
+        {
+          title: "朋友", artist: "周华健",
+          key: "G", bpm: 80, time: "4/4",
+          chordPro: `
+Structure
+Intro
+Verse 1 (quiet for 1st half)
+Chorus 1
+Interlude
+Verse 2
+Chorus 2 x 2
+Last Chorus (up key)
+Ending
+
+Intro
+G D/F# Em D
+C Bm Am (D) G
+
+Verse
+    G    Em   Bm   Em
+这些年 一个人 风也过 雨也走
+    Am7    C     Am7    D
+有过泪 有过错 还记得坚持什么
+    G    Em   Bm   Em
+真爱过 才会懂 会寂寞 会回首
+    Am7   D    G
+终有梦 终有你 在心中
+
+Chorus
+    G    F#  Em      D
+朋友 一生一起走 那些日子 不再有
+   C    B   Am7    D
+一句话 一辈子 一生情 一杯酒
+    G    F#  Em       D
+朋友 不曾孤单过 一声朋友 你会懂
+   C    B   Am7   D  G
+还有伤 还有痛 还要走 还有我
+
+Interlude
+E B C# x 2
+A (B) E
+D (A) G
+
+Last Chorus
+Play Eb before transitioning
+Up key 1 step
+
+Repeat Last Chorus for Ending
+`.trim()
+        },
+        {
+          title: "The Final Countdown", artist: "Europe",
+          key: "Em", bpm: 118, time: "4/4",
+          draft: true,
+          draftNote: "Chord chart pending.",
+        }
+      ]
+    },
+    {
+      name: "Set 3",
+      songs: [
+        {
+          title: "In the End", artist: "Linkin Park",
+          key: "D#m", bpm: 105, time: "4/4",
+          chordPro: `
+Intro
+Verse: D# C# B C#
+Chorus: D# F# C# B
+
+Verse 1
+         D#m
+It starts with one thing
+I don't know why
+   C#
+It doesn't even matter how hard you try
+  B
+Keep that in mind
+I designed this rhyme
+     C#
+To explain in due time
+     D#m
+All I know
+Time is a valuable thing
+  C#
+Watch it fly by as the pendulum swings
+  B
+Watch it count down to the end of the day
+        C#
+The clock ticks life away
+         D#m
+It's so unreal
+Didn't look out below
+  C#
+Watch the time go right out the window
+ B
+Trying to hold on, but didn't even know
+    C#                  D#m
+I wasted it all just to watch you go
+I kept everything inside
+           C#
+And even though I tried,
+            B
+It all fell apart what it meant to me
+              C#
+Will eventually be a memory of a time when
+
+Chorus
+        D#m
+I tried so hard
+         F#
+And got so far
+        C#
+But in the end
+         B
+It doesn't even matter
+       D#m
+I had to fall
+       F#
+To lose it all
+       C#
+But in the end
+         B
+It doesn't even matter
+
+Verse 2
+D#m
+One thing, I don't know why
+  C#
+It doesn't even matter
+How hard you try,
+ B
+Keep that in mind
+I designed this rhyme,
+     C#
+To remind myself how
+ F#    D#m
+I tried so hard
+In spite of the way you were mocking me
+C#
+ Acting like I was part of your property
+B
+ Remembering all the times you fought with me
+C#
+ I'm surprised it got so
+
+       D#m
+(far) Things aren't the way they were before
+C#
+ You wouldn't even recognize me anymore
+B
+ Not that you knew me back then
+       C#
+But it all comes back to me
+       D#m
+In the end
+You kept everything inside
+        C#
+And even though I tried, it all fell apart
+B
+What it meant to me will eventually
+        C#
+Be a memory of a time when
+
+Chorus
+        D#m
+I tried so hard
+         F#
+And got so far
+        C#
+But in the end
+         B
+It doesn't even matter
+       D#m
+I had to fall
+       F#
+To lose it all
+       C#
+But in the end
+         B
+It doesn't even matter
+
+Bridge
+        D#m   C#
+I've put my trust in you
+      B      C#
+Pushed as far as I can go
+       D#m
+For all this
+         C#
+There's only one  thing
+       B C#
+You should know
+       D#m   F#
+I've put my trust in you
+      C#     B
+Pushed as far as I can go
+       D#m
+For all this
+         F#
+There's only one thing
+      C# B
+You should know
+
+Chorus
+I tried so hard
+D#m
+        F#
+And got so far
+       C#
+But in the end
+         B
+It doesn't even matter
+       D#m
+I had to fall
+       F#
+To lose it all
+       C#
+But in the end
+         B
+It doesn't even matter
+`.trim()
+        },
+        {
+          title: "修炼爱情", artist: "林俊杰",
+          key: "G#", bpm: 74, time: "4/4",
+          chordPro: `
+Verse 1
+憑什麼要失望 藏眼淚到心臟
+往事不會說謊 別跟他為難
+我們兩人之間 不需要這樣
+我想
+
+Chorus
+修煉愛情的心酸
+學會放好以前的渴望
+我們那些信仰 要忘記多難
+遠距離的欣賞 近距離的迷惘
+誰說太陽會找到月亮
+別人有的愛 我們不可能模仿
+
+修煉愛情的悲歡
+我們這些努力不簡單
+快樂煉成淚水 是一種勇敢
+幾年前的幻想 幾年後的原諒
+為一張臉去養一身傷
+別講想念我 我會受不了這樣
+
+Verse 2
+記憶它真囂張 路燈把痛點亮
+(enter)
+        C       G        F
+情人一起看過 多少次月亮
+        C       G        F
+它在天空 看過多少次遺忘
+        A#
+多少心慌
+
+Chorus
+        G#    A#
+修煉愛情的心酸
+        G       C
+學會放好以前的渴望
+       F     A#       D#
+我們那些信仰 要忘記多難
+        G#       A#
+遠距離的欣賞 近距離的迷惘
+        G        C
+誰說太陽會找到月亮
+       F   G#    A#
+別人有的愛 我們不可能模仿
+
+        G#    A#
+修煉愛情的悲歡
+        G    C
+我們這些努力不簡單
+       F    A#       D#
+快樂煉成淚水 是一種勇敢
+       G#       A#
+幾年前的幻想 幾年後的原諒
+        G        C
+為一張臉去養一身傷
+       F   G#
+別講想念我 我會受不了這樣
+
+Interlude
+C A# A x 2
+
+Bridge
+G#         A#
+笑著說愛讓人瘋狂
+B          C
+哭著說愛讓人緊張
+F     G#    A#  B
+忘不了那個人就投降
+
+Last Chorus
+        A    B
+修煉愛情的悲歡
+        G#m  C#m
+我們這些努力不簡單
+       F#m7   B          E
+快樂煉成淚水 是一種勇敢
+       A           B
+幾年前的幻想 幾年後的原諒
+        G#    C#
+為一張臉去養一身傷
+       F#    B    E
+別講想念我 我會受不了這樣
+
+       A    B
+幾年前的幻想 幾年後的原諒
+        G#    C#
+為一張臉去養一身傷
+       F#   B    E
+別講想念我 我會受不了這樣
+
+End
+E
+`.trim()
+        },
+        {
+          title: "洋葱", artist: "杨宗纬",
+          key: "C", bpm: 74, time: "4/4",
+          chordPro: `
+Intro
+Keys only
+
+Verse 1
+如果你眼神能夠為我 片刻的降臨
+如果你能聽到 心碎的聲音
+沉默的守護著你 沉默的等奇蹟
+沉默的讓自己 像是空氣
+
+大家都喧著聊著笑著 今晚多開心
+最角落裏的我 笑得多合羣
+盤底的洋蔥像我 永遠是調味品
+   F   F  G   G   (enter)
+偷偷的看著你 偷偷的隱藏著自己
+
+Chorus
+   C    B    A
+如果你願意一層 一層的剝開我的心
+  F    E    D    G
+你會發現 你會訝異 你是我 最壓抑 最深處的祕密
+   C    B    A
+如果你願意一層 一層的剝開我的心
+  F    E    D    G   C
+你會鼻酸 你會流淚 只要你能 聽到我 看到我的全心全意
+
+Interlude
+F E D G (play on D string near 12th fret)
+
+Verse 2
+   C    C    F    F
+聽說你和你的他們 曖昧的空氣
+Dm   Dm   E   A
+我和我的絕望 裝得很風趣
+F    F   Em   Am
+我就像一顆洋蔥 永遠是配角戲
+ F   C   (F) G   G
+多希望能與你 有一秒專屬的劇情
+
+Chorus
+   C    B    A
+如果你願意一層 一層的剝開我的心
+  F    E    D    G
+你會發現 你會訝異 你是我 最壓抑 最深處的祕密
+   C    B    A
+如果你願意一層 一層的剝開我的心
+  F    E    D    G   C
+你會鼻酸 你會流淚 只要你能 聽到我 看到我的全心全意
+
+Solo
+A B C
+A B C
+C A# D# C
+F C G
+
+Last Chorus
+   C    B    A
+如果你願意一層 一層的剝開我的心
+        (Enter)
+   F    E    D     G
+你會發現 你會訝異 你是我 最壓抑 最深處的祕密
+       A    B    C
+如果你願意一層一層 一層的剝開我的心
+   F   E   D    G    F E D# D
+你會鼻酸 你會流淚 只要你能 聽到我 看到我的全心全意
+你會鼻酸 你會流淚 只要你能 聽到我 看到我的全心全意
+`.trim()
+        },
+        {
+          title: "You Belong with Me", artist: "Taylor Swift",
+          key: "C", bpm: 130, time: "4/4",
+          draft: true,
+          draftNote: "Chord chart pending.",
+        },
+        {
+          title: "Crazy in Love", artist: "Beyoncé (Daniela Andrade cover)",
+          key: "Dm", bpm: 99, time: "4/4",
+          chordPro: `
+Chorus
+Bb G
+
+Verse
+F (third of D)
+
+Transition / Ending / Improvisation
+C C# D
+
+Crazy
+Dm
+  Come on now, who do you
+Who do you, who do you
+                F
+Who do you think you are?
+            Bb
+Ha ha ha, bless your soul
+                    Asus4 A
+You really think you're in control?
+Well
+             Dm
+I think you're craaazy
+            F
+I think you're craaazy
+             Bb
+I think you're craaazy
+            Asus4 A
+Just like me
+`.trim()
+        },
+        {
+          title: "Heart Attack", artist: "Demi Lovato",
+          key: "C#m", bpm: 88, time: "4/4",
+          chordPro: `
+Intro
+Putting my defenses up,
+'Cause I don't wanna fall in love,
+If I ever did that,
+I think I'd have a heart attack.
+
+Verse 1
+C#            G#           D#
+Never put my love out on the line,
+        Fm
+Never said yes to the right guy,
+C#            G#           D#
+Never had trouble getting what I want,
+            Fm
+But when it comes to you, I'm never good enough.
+C#       G# D#sus4
+When I don't care,
+     Fm
+I can play 'em like a Ken doll,
+C#     G# D#sus4
+Won't wash my hair,
+              Fm
+Then make 'em bounce like a basketball.
+
+Pre-Chorus
+C#         G#         D#sus4
+But you make me wanna act like a girl,
+        Fm
+Paint my nails and wear high heels,
+C#               G#
+Yes you make me so nervous,
+      C11
+That I just can't hold your hand.
+
+Chorus
+            C#  G# D#         Fm
+You make me glo-o-o-o-o-ow, but I cover up,
+            C# G# D#
+Won't let it sho-o-o-o-o-ow, so I'm,
+C#            Cm
+Putting my defenses up,
+        Fm           A#
+'Cause I don't wanna fall in love,
+   C#
+If I ever did that,
+  C11        Fm   C# G#
+I think I'd have a heart atta-a-a-a-a-ack,
+ D#          Fm   C# G#
+I think I'd have a heart atta-a-a-a-a-ack,
+ D#
+I think I'd have a heart attack.
+
+Verse 2
+C#            G#           D#
+Never break a sweat for the other guys,
+              Fm
+When ya come around, I get paralyzed,
+C#            G#           D#
+And every time I try to be myself,
+            Fm
+It comes out wrong like a cry for help.
+C#  G# D#
+It's just not fair,
+       Fm
+Pain's more trouble than love is worth,
+C#  G# D#
+I gasp for air,
+       Fm
+It feels so good, but you know it hurts.
+
+Pre-Chorus
+C#         G#                D#sus4
+But you make me wanna act like a girl,
+        Fm
+Paint my nails and wear high heels,
+C#                    G#
+Yes you make me so nervous,
+      C11
+That I just can't hold your hand.
+
+Chorus
+            C# G# D#         Fm
+You make me glo-o-o-o-o-ow, but I cover up,
+            C# G# D#
+Won't let it sho-o-o-o-o-ow, so I'm,
+C#           Cm
+Putting my defenses up,
+        Fm            A#
+'Cause I don't wanna fall in love,
+   C#
+If I ever did that,
+  C11        Fm   C# G#
+I think I'd have a heart atta-a-a-a-a-ack,
+ D#          Fm   C# G#
+I think I'd have a heart atta-a-a-a-a-ack,
+ D#
+I think I'd have a heart attack.
+
+Bridge
+Fm                C#
+The feelings are lost in my lungs,
+                G#
+They're burning, I'd rather be numb,
+          D#/G
+And there's no one else to blame,
+Fm            C#
+So scared I'd take off in a run,
+                G#
+I'm flying too close to the sun,
+         C7  C7  C7
+And I burst into flames . . .
+
+Chorus
+            C# G# D#          Fm
+You make me glo-o-o-o-o-ow, but I cover up,
+            C# G# D#
+Won't let it sho-o-o-o-o-ow, so I'm,
+C#            Cm
+Putting my defenses up,
+        Fm            A#
+'Cause I don't wanna fall in love,
+   C#
+If I ever did that,
+  C11   (enter)  Fm   C# G#
+I think I'd have a heart atta-a-a-a-a-ack,
+ D#          Fm   C# D#
+I think I'd have a heart atta-a-a-a-a-ack,
+ D#          Fm   C# G#
+I think I'd have a heart atta-a-a-a-a-ack,
+ D#          Fm   C# G#
+I think I'd have a heart atta-a-a-a-a-ack,
+ D#
+I think I'd have a heart attack.
+
+Outro
+C# C# Fm D#
+C# C# Fm D#
+C# C# Fm D#
+C# C# Fm D#
+(Fade Out)
+`.trim()
+        },
+        {
+          title: "霍元甲", artist: "周杰伦",
+          key: "Dm", bpm: 84, time: "4/4",
+          chordPro: `
+Whole Song
+Dm Bbmaj7 Gm Am
+
+嚇 命有幾回合 擂台等著 生死狀 贏了什麼 冷笑著
+天下誰的 第一又如何 止干戈 我輩尚武德
+我的 拳腳了得 卻奈何 徒增虛名一個
+江湖難測 誰是強者 誰爭一統武林的資格
+
+霍，活，过，我
+
+       D     Bb     G  A  D
+洗濯過的回憶 我記得你 驕傲的活下去
+`.trim()
+        },
+        {
+          title: "Mr Brightside", artist: "The Killers",
+          key: "C#", bpm: 148, time: "4/4",
+          draft: true,
+          draftNote: "Chord chart pending.",
+        },
+        {
+          title: "告白气球", artist: "周杰伦",
+          key: "B", bpm: 89, time: "4/4",
+          chordPro: `
+Intro
+E F# B x 2
+G# F# E B/D# C# E F#
+
+Verse
+G#                  D#
+塞納河畔 左岸的咖啡
+                    E
+我手一杯 品嚐你的美
+            B
+留下唇印的嘴
+
+G#             D#
+花店玫瑰 名字寫錯誰
+                E
+告白氣球 風吹到對街
+    F#     B
+微笑在天上飛
+
+Pre-Chorus
+      E         F#/E
+你說你有點難追 想讓我知難而退
+       D#         G#
+禮物不需挑最貴 只要香榭的落葉
+        C#                C#
+營造浪漫的約會 不害怕搞砸一切
+       E         F#
+擁有你就擁有 全世界
+
+Chorus
+   B   D#  G#   F#
+親愛的 愛上你 從那天起
+E   F#    B
+甜蜜的很輕易
+   B   D#  G#   F#
+親愛的 別任性 你的眼睛
+E   F#    B
+在說我願意
+
+Interlude
+B F#/A# G# G#/F# E F# B x 2
+
+Repeat
+   - Verse
+   - Pre-Chorus
+   - Chorus
+   - Quiet Chorus but I keep playing
+
+Quiet Chorus (single note)
+   B   D#  G#   F#
+親愛的 愛上你 戀愛日記
+E   F#   B
+飄香水的回憶
+   B   D#  G#   F#
+一整瓶 的夢境 全都有你
+E   F#   B
+攪拌在一起
+
+Outro
+   B   D#  G#   F#
+親愛的 別任性 你的眼睛
+E   F#   B
+在說我願意
+`.trim()
+        },
+        {
+          title: "A Sky Full of Stars", artist: "Coldplay",
+          key: "Eb", bpm: 125, time: "4/4",
+          draft: true,
+          draftNote: "Bass tabs only in source. Guitar chord chart pending.",
+        }
+      ]
+    }
+  ]
+};
+
+// ----- Two-line chord-over-lyric parser ---------------------
+// Detects: section headers, chord-only lines paired with lyric lines,
+// passes through real ChordPro [Chord]Lyric lines untouched.
+
+const CHORD_TOKEN_RE = /^\(?[A-G][b#]?(?:m|maj|min|sus|add|aug|dim|°|Δ|7|9|11|13|6|5|4|2|3)*\d*(?:\/[A-G][b#]?(?:m|maj|min)*\d*)?\)?$/;
+
+function detectSection(line) {
+  const t = line.trim();
+  if (!t) return null;
+  const lower = t.toLowerCase();
+  if (/^intro\b/.test(lower)) return { section: 'intro', label: t };
+  if (/^outro\b/.test(lower)) return { section: 'outro', label: t };
+  if (/^end(ing)?\b/.test(lower)) return { section: 'ending', label: t };
+  if (/^verse\b/.test(lower)) return { section: 'verse', label: t };
+  if (/^pre[-\s]?chorus\b/.test(lower)) return { section: 'prechorus', label: 'Pre-Chorus' };
+  if (/^post[-\s]?chorus\b/.test(lower)) return { section: 'chorus', label: t };
+  if (/^last\s*chorus\b/.test(lower)) return { section: 'chorus', label: t };
+  if (/^quiet\s*chorus\b/.test(lower)) return { section: 'chorus', label: t };
+  if (/^chorus\b/.test(lower)) return { section: 'chorus', label: t };
+  if (/^bridge\b/.test(lower)) return { section: 'bridge', label: t };
+  if (/^interlude\b/.test(lower)) return { section: 'interlude', label: t };
+  if (/^solo\b/.test(lower)) return { section: 'solo', label: t };
+  if (/^transition\b/.test(lower)) return { section: 'transition', label: t };
+  if (/^repeat\b/.test(lower)) return { section: 'repeat', label: t };
+  if (/^structure\b/.test(lower)) return { section: 'structure', label: t };
+  if (/^chord\s*overview\b/.test(lower)) return { section: 'comment', label: t };
+  if (/^whole\s*song\b/.test(lower)) return { section: 'comment', label: t };
+  if (/^core\b/.test(lower) && t.length < 10) return { section: 'verse', label: t };
+  return null;
+}
+
+function isChordToken(t) { return CHORD_TOKEN_RE.test(t); }
+
+function isChordLine(line) {
+  const t = line.trim();
+  if (!t) return false;
+  // Reject lines that contain CJK or other non-ASCII letters (those are lyrics)
+  if (/[^\x00-\x7F]/.test(t)) return false;
+  const tokens = t.split(/\s+/);
+  if (!tokens.length) return false;
+  // Need at least one true chord token
+  if (!tokens.some(tk => /^[A-G]/.test(tk))) return false;
+  return tokens.every(isChordToken);
+}
+
+function chordPositions(line) {
+  const positions = [];
+  const re = /\S+/g;
+  let m;
+  while ((m = re.exec(line)) !== null) {
+    positions.push({ col: m.index, chord: m[0] });
+  }
+  return positions;
+}
+
+function mergeChordLyric(chordLine, lyricLine) {
+  const positions = chordPositions(chordLine);
+  if (!positions.length) return lyricLine;
+  let result = '';
+  let lyric = lyricLine || '';
+  let lastCol = 0;
+  for (const { col, chord } of positions) {
+    while (lyric.length < col) lyric += ' ';
+    result += lyric.slice(lastCol, col);
+    result += '[' + chord + ']';
+    lastCol = col;
+  }
+  result += lyric.slice(lastCol);
+  return result;
+}
+
+function preprocessChordChart(src) {
+  const lines = src.split('\n');
+  const out = [];
+  let i = 0;
+  while (i < lines.length) {
+    const raw = lines[i];
+    // Existing ChordPro lines (contain inline [...]) pass through
+    if (/\[[^\]]+\]/.test(raw)) { out.push(raw); i++; continue; }
+    // Blank line
+    if (!raw.trim()) { out.push(''); i++; continue; }
+    // Section header
+    const sec = detectSection(raw);
+    if (sec) {
+      const tagMap = { verse: 'verse', chorus: 'chorus', bridge: 'bridge' };
+      if (tagMap[sec.section]) out.push('{start_of_' + tagMap[sec.section] + ': ' + sec.label + '}');
+      else out.push('{comment: ' + sec.label + '}');
+      i++;
+      continue;
+    }
+    // Chord-only line
+    if (isChordLine(raw)) {
+      // Look for next non-blank line
+      let j = i + 1;
+      while (j < lines.length && !lines[j].trim()) j++;
+      if (j < lines.length && !isChordLine(lines[j]) && !detectSection(lines[j])) {
+        // Pair this chord line with that lyric line
+        out.push(mergeChordLyric(raw, lines[j]));
+        i = j + 1;
+        continue;
+      } else {
+        // Standalone chord-only line — render as inline ChordPro with empty text
+        const tokens = raw.trim().split(/\s+/);
+        out.push(tokens.map(c => '[' + c + ']').join(' '));
+        i++;
+        continue;
+      }
+    }
+    // Plain lyric line
+    out.push(raw);
+    i++;
+  }
+  return out.join('\n');
+}
+
+// ----- ChordPro parser (now accepts section labels) ---------
+function parseChordPro(src) {
+  const out = [];
+  for (const raw of src.split('\n')) {
+    const line = raw;
+    const trimmed = line.trim();
+    if (!trimmed) { out.push({ type: 'blank' }); continue; }
+
+    const dir = trimmed.match(/^\{([a-z_]+)(?::\s*(.+))?\}$/i);
+    if (dir) {
+      const name = dir[1].toLowerCase();
+      const arg = dir[2] ? dir[2].trim() : null;
+      if (name === 'start_of_verse')   out.push({ type: 'section', section: 'verse',  label: arg || 'Verse' });
+      else if (name === 'start_of_chorus') out.push({ type: 'section', section: 'chorus', label: arg || 'Chorus' });
+      else if (name === 'start_of_bridge') out.push({ type: 'section', section: 'bridge', label: arg || 'Bridge' });
+      else if (name === 'comment') out.push({ type: 'comment', label: arg || '' });
+      continue;
+    }
+
+    // Inline [Chord]Lyric
+    if (trimmed.includes('[')) {
+      const parts = [];
+      const firstBracket = line.indexOf('[');
+      if (firstBracket > 0) parts.push({ chord: '', text: line.slice(0, firstBracket) });
+      let i = Math.max(0, firstBracket);
+      while (i < line.length) {
+        if (line[i] === '[') {
+          const close = line.indexOf(']', i);
+          if (close === -1) break;
+          const chord = line.slice(i + 1, close);
+          i = close + 1;
+          let next = line.indexOf('[', i);
+          if (next === -1) next = line.length;
+          parts.push({ chord, text: line.slice(i, next) });
+          i = next;
+        } else { i++; }
+      }
+      out.push({ type: 'lyric', parts });
+    } else {
+      out.push({ type: 'lyric', parts: [{ chord: '', text: line }] });
+    }
+  }
+  return out;
+}
+
+// ----- Transpose (unchanged) --------------------------------
+const SHARPS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const FLATS  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const FLAT_KEYS = new Set(['F','Bb','Eb','Ab','Db','Gb','Cb','Dm','Gm','Cm','Fm','Bbm','Ebm','Abm']);
+
+function noteIndex(n) {
+  const s = SHARPS.indexOf(n); if (s !== -1) return s;
+  return FLATS.indexOf(n);
+}
+function transposeNote(n, semis, useFlats) {
+  const idx = noteIndex(n);
+  if (idx === -1) return n;
+  const i = (((idx + semis) % 12) + 12) % 12;
+  return (useFlats ? FLATS : SHARPS)[i];
+}
+function transposeKey(key, semis) {
+  const m = key.match(/^([A-G][b#]?)(m?.*)$/);
+  if (!m) return key;
+  const root = m[1], rest = m[2] || '';
+  const flatGuess  = transposeNote(root, semis, true)  + rest;
+  const sharpGuess = transposeNote(root, semis, false) + rest;
+  if (FLAT_KEYS.has(flatGuess)) return flatGuess;
+  if (FLAT_KEYS.has(sharpGuess)) return sharpGuess;
+  return sharpGuess;
+}
+function transposeChord(chord, semis, useFlats) {
+  const m = chord.match(/^([A-G][b#]?)([^\/]*)(?:\/([A-G][b#]?))?$/);
+  if (!m) return chord;
+  const root = transposeNote(m[1], semis, useFlats);
+  const suffix = m[2] || '';
+  const bass = m[3] ? '/' + transposeNote(m[3], semis, useFlats) : '';
+  return root + suffix + bass;
+}
+function isFlatContext(key, offset) { return FLAT_KEYS.has(transposeKey(key, offset)); }
+
+// ----- State ------------------------------------------------
+const state = {
+  setIndex: 0,
+  songIndex: 0,
+  parsed: [],
+  transposeOffset: 0,
+  scrollSpeed: 36,
+  playing: false,
+  lastTs: 0,
+  metroStart: 0,
+  beatsPerBar: 4,
+  currentBeat: -1,
+  virtualScroll: 0,  // float accumulator so fractional px/frame motion isn't lost
+  pendingSetTransition: null,
+};
+
+function currentSet() { return GIG.sets[state.setIndex]; }
+function currentSong() { return currentSet().songs[state.songIndex]; }
+
+// ----- DOM refs ---------------------------------------------
+const el = {
+  gigName: document.getElementById('gigName'),
+  setTabs: document.getElementById('setTabs'),
+  songPickerBtn: document.getElementById('songPickerBtn'),
+  songPickerMenu: document.getElementById('songPickerMenu'),
+  title: document.getElementById('songTitle'),
+  artist: document.getElementById('songArtist'),
+  pos: document.getElementById('songPos'),
+  draftBadge: document.getElementById('draftBadge'),
+  key: document.getElementById('songKey'),
+  bpm: document.getElementById('songBpm'),
+  time: document.getElementById('songTime'),
+  beats: document.getElementById('beats'),
+  transOffset: document.getElementById('transOffset'),
+  transUp: document.getElementById('transUp'),
+  transDown: document.getElementById('transDown'),
+  prevSong: document.getElementById('prevSong'),
+  nextSong: document.getElementById('nextSong'),
+  chart: document.getElementById('chart'),
+  playBtn: document.getElementById('playBtn'),
+  restartBtn: document.getElementById('restartBtn'),
+  speed: document.getElementById('speedSlider'),
+  speedLabel: document.getElementById('speedLabel'),
+  progressFill: document.getElementById('progressFill'),
+  elapsedTime: document.getElementById('elapsedTime'),
+  remainingTime: document.getElementById('remainingTime'),
+  modal: document.getElementById('setCompleteModal'),
+  modalSubtitle: document.getElementById('modalSubtitle'),
+  modalMeta: document.getElementById('modalMeta'),
+  modalCancel: document.getElementById('modalCancel'),
+  modalStart: document.getElementById('modalStart'),
+};
+
+// ----- Helpers ----------------------------------------------
+function formatTime(s) {
+  s = Math.max(0, s);
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return m + ':' + sec.toString().padStart(2, '0');
+}
+
+// ----- Render -----------------------------------------------
+function renderGigBar() {
+  el.gigName.textContent = GIG.name;
+  el.setTabs.innerHTML = '';
+  GIG.sets.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'set-tab' + (i === state.setIndex ? ' active' : '');
+    b.textContent = s.name;
+    b.addEventListener('click', () => loadSong(i, 0));
+    el.setTabs.appendChild(b);
+  });
+}
+
+function renderSongPicker() {
+  el.songPickerMenu.innerHTML = '';
+  const songs = currentSet().songs;
+  songs.forEach((song, idx) => {
+    const item = document.createElement('div');
+    item.className = 'picker-item' + (idx === state.songIndex ? ' current' : '');
+    const num = document.createElement('span');
+    num.className = 'picker-num';
+    num.textContent = (idx + 1) + '.';
+    const title = document.createElement('span');
+    title.className = 'picker-title';
+    title.textContent = song.title;
+    item.appendChild(num);
+    item.appendChild(title);
+    if (song.draft) {
+      const b = document.createElement('span');
+      b.className = 'picker-badge';
+      b.textContent = 'DRAFT';
+      item.appendChild(b);
+    }
+    item.addEventListener('click', () => {
+      loadSong(state.setIndex, idx);
+      closeSongPicker();
+    });
+    el.songPickerMenu.appendChild(item);
+  });
+  el.songPickerBtn.textContent = currentSet().name + ' · ' + (state.songIndex + 1) + ' of ' + songs.length + ' ▾';
+}
+
+function renderTOC() {
+  const tocContent = document.getElementById('toc-content');
+  const tocGigName = document.getElementById('tocGigName');
+  tocGigName.textContent = GIG.name;
+  tocContent.innerHTML = '';
+
+  GIG.sets.forEach((set, setIdx) => {
+    const setDiv = document.createElement('div');
+    setDiv.className = 'toc-set' + (setIdx === state.setIndex ? ' current' : '');
+    setDiv.dataset.setIdx = setIdx;
+
+    const setTitle = document.createElement('div');
+    setTitle.className = 'toc-set-title';
+    setTitle.textContent = set.name;
+    setDiv.appendChild(setTitle);
+
+    const songsDiv = document.createElement('div');
+    songsDiv.className = 'toc-songs';
+
+    set.songs.forEach((song, songIdx) => {
+      const songDiv = document.createElement('div');
+      songDiv.className = 'toc-song' + (setIdx === state.setIndex && songIdx === state.songIndex ? ' current' : '');
+      songDiv.dataset.setIdx = setIdx;
+      songDiv.dataset.songIdx = songIdx;
+      songDiv.textContent = song.title;
+      songDiv.addEventListener('click', () => {
+        loadSong(setIdx, songIdx);
+        // Close sidebar on mobile after clicking a song
+        const sidebar = document.getElementById('toc-sidebar');
+        sidebar.classList.remove('open');
+      });
+      songsDiv.appendChild(songDiv);
+    });
+
+    setDiv.appendChild(songsDiv);
+    tocContent.appendChild(setDiv);
+  });
+}
+
+function loadSong(setIdx, songIdx) {
+  state.setIndex = Math.max(0, Math.min(GIG.sets.length - 1, setIdx));
+  const songs = currentSet().songs;
+  state.songIndex = Math.max(0, Math.min(songs.length - 1, songIdx));
+  const song = currentSong();
+  const src = song.chordPro ? preprocessChordChart(song.chordPro) : '';
+  state.parsed = parseChordPro(src);
+  state.transposeOffset = 0;
+  state.currentBeat = -1;
+  const [num] = (song.time || '4/4').split('/').map(Number);
+  state.beatsPerBar = num || 4;
+  togglePlay(false);
+  renderGigBar();
+  renderSongPicker();
+  renderTopbar();
+  renderBeats();
+  renderChart();
+  renderTOC();
+  el.chart.scrollTop = 0;
+}
+
+function renderTopbar() {
+  const s = currentSong();
+  el.title.textContent = s.title;
+  el.artist.textContent = s.artist ? ' — ' + s.artist : '';
+  el.pos.textContent = '(' + (state.songIndex + 1) + ' of ' + currentSet().songs.length + ' · ' + currentSet().name + ')';
+  el.draftBadge.hidden = !s.draft;
+  el.bpm.textContent = s.bpm;
+  el.time.textContent = s.time;
+  updateKey();
+}
+
+function updateKey() {
+  const s = currentSong();
+  el.key.textContent = transposeKey(s.key, state.transposeOffset);
+  el.transOffset.textContent = (state.transposeOffset > 0 ? '+' : '') + state.transposeOffset;
+}
+
+function renderBeats() {
+  el.beats.innerHTML = '';
+  for (let i = 0; i < state.beatsPerBar; i++) {
+    const d = document.createElement('div');
+    d.className = 'beat' + (i === 0 ? ' downbeat' : '');
+    el.beats.appendChild(d);
+  }
+}
+
+function renderChart() {
+  const s = currentSong();
+  el.chart.innerHTML = '';
+
+  if (s.draft) {
+    const card = document.createElement('div');
+    card.className = 'draft-card';
+    card.innerHTML = '<div class="label">DRAFT</div>' +
+                     '<h2>' + escapeHtml(s.title) + '</h2>' +
+                     '<p>This song is in draft. The chord chart has not been entered yet.</p>' +
+                     (s.draftNote ? '<div class="ref">' + escapeHtml(s.draftNote) + '</div>' : '');
+    el.chart.appendChild(card);
+    return;
+  }
+
+  const useFlats = isFlatContext(s.key, state.transposeOffset);
+  state.parsed.forEach((node, i) => {
+    if (node.type === 'blank') {
+      const div = document.createElement('div');
+      div.className = 'line blank';
+      div.dataset.lineIndex = i;
+      el.chart.appendChild(div);
+      return;
+    }
+    if (node.type === 'section') {
+      const div = document.createElement('div');
+      div.className = 'line section';
+      div.dataset.lineIndex = i;
+      div.dataset.section = node.section;
+      div.textContent = node.label;
+      el.chart.appendChild(div);
+      return;
+    }
+    if (node.type === 'comment') {
+      const div = document.createElement('div');
+      div.className = 'line comment';
+      div.dataset.lineIndex = i;
+      div.textContent = node.label;
+      el.chart.appendChild(div);
+      return;
+    }
+    if (node.type === 'lyric') {
+      const lineDiv = document.createElement('div');
+      lineDiv.className = 'line';
+      lineDiv.dataset.lineIndex = i;
+      let chordLine = '', lyricLine = '';
+      for (const p of node.parts) {
+        const t = p.chord ? transposeChord(p.chord, state.transposeOffset, useFlats) : '';
+        while (chordLine.length < lyricLine.length) chordLine += ' ';
+        chordLine += t;
+        lyricLine += p.text;
+        while (lyricLine.length < chordLine.length) lyricLine += ' ';
+      }
+      const hasChord = node.parts.some(p => p.chord);
+      if (hasChord) {
+        const chordRow = document.createElement('div');
+        chordRow.className = 'chord-row';
+        chordRow.textContent = chordLine || ' ';
+        lineDiv.appendChild(chordRow);
+      }
+      const lyricRow = document.createElement('div');
+      lyricRow.className = 'lyric-row';
+      lyricRow.textContent = lyricLine || ' ';
+      lineDiv.appendChild(lyricRow);
+      el.chart.appendChild(lineDiv);
+    }
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// ----- Highlight & scroll -----------------------------------
+function updateHighlight() {
+  const playheadY = el.chart.clientHeight * 0.12;
+  const lines = el.chart.querySelectorAll('.line');
+  const chartTop = el.chart.getBoundingClientRect().top;
+  let active = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const r = lines[i].getBoundingClientRect();
+    const rel = { top: r.top - chartTop, bottom: r.bottom - chartTop };
+    if (rel.top <= playheadY && rel.bottom >= playheadY) { active = i; break; }
+  }
+  lines.forEach((l, i) => l.classList.toggle('active', i === active));
+}
+
+function updateProgress() {
+  const max = el.chart.scrollHeight - el.chart.clientHeight;
+  if (max <= 0) {
+    el.progressFill.style.width = '0%';
+    el.elapsedTime.textContent = '0:00';
+    el.remainingTime.textContent = '-0:00';
+    return;
+  }
+  const pct = Math.max(0, Math.min(1, el.chart.scrollTop / max));
+  el.progressFill.style.width = (pct * 100).toFixed(2) + '%';
+  const totalSec = max / state.scrollSpeed;
+  const elapsedSec = pct * totalSec;
+  el.elapsedTime.textContent = formatTime(elapsedSec);
+  el.remainingTime.textContent = '-' + formatTime(totalSec - elapsedSec);
+}
+
+function tick(ts) {
+  if (!state.lastTs) state.lastTs = ts;
+  const dt = (ts - state.lastTs) / 1000;
+  state.lastTs = ts;
+  if (state.playing) {
+    state.virtualScroll += state.scrollSpeed * dt;
+    el.chart.scrollTop = state.virtualScroll;
+    if (state.virtualScroll >= el.chart.scrollHeight - el.chart.clientHeight - 1) togglePlay(false);
+  } else {
+    // While paused / manually scrolling, keep virtualScroll synced to real position
+    state.virtualScroll = el.chart.scrollTop;
+  }
+  updateHighlight();
+  updateMetronome(ts);
+  updateProgress();
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+function updateMetronome(ts) {
+  if (!state.playing) {
+    if (state.currentBeat !== -1) {
+      el.beats.querySelectorAll('.beat').forEach(b => b.classList.remove('active'));
+      state.currentBeat = -1;
+    }
+    return;
+  }
+  const msPerBeat = 60000 / currentSong().bpm;
+  const elapsed = ts - state.metroStart;
+  const beatIdx = Math.floor(elapsed / msPerBeat) % state.beatsPerBar;
+  if (beatIdx !== state.currentBeat) {
+    state.currentBeat = beatIdx;
+    el.beats.querySelectorAll('.beat').forEach((b, i) => b.classList.toggle('active', i === beatIdx));
+  }
+}
+
+// ----- Controls ---------------------------------------------
+function togglePlay(force) {
+  const next = typeof force === 'boolean' ? force : !state.playing;
+  state.playing = next;
+  el.playBtn.textContent = next ? '⏸ Pause' : '▶ Play';
+  el.playBtn.classList.toggle('active', next);
+  if (next) { state.metroStart = performance.now(); state.currentBeat = -1; }
+}
+el.playBtn.addEventListener('click', () => togglePlay());
+el.restartBtn.addEventListener('click', () => { el.chart.scrollTop = 0; togglePlay(false); });
+
+document.querySelectorAll('[data-section]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.section;
+    const sections = el.chart.querySelectorAll('.line.section[data-section="' + target + '"]');
+    if (!sections.length) return;
+    const playheadAbs = el.chart.scrollTop + el.chart.clientHeight * 0.12;
+    let next = null;
+    for (const s of sections) {
+      if (s.offsetTop > playheadAbs + 4) { next = s; break; }
+    }
+    if (!next) next = sections[0];
+    el.chart.scrollTop = next.offsetTop - el.chart.clientHeight * 0.12;
+  });
+});
+
+el.transUp.addEventListener('click', () => {
+  state.transposeOffset = Math.min(state.transposeOffset + 1, 11);
+  updateKey(); renderChart();
+});
+el.transDown.addEventListener('click', () => {
+  state.transposeOffset = Math.max(state.transposeOffset - 1, -11);
+  updateKey(); renderChart();
+});
+
+el.speed.addEventListener('input', () => {
+  state.scrollSpeed = +el.speed.value;
+  el.speedLabel.textContent = state.scrollSpeed + ' px/s';
+});
+
+// Prev / Next — navigate within the current set, with end-of-set handoff
+el.prevSong.addEventListener('click', () => {
+  if (state.songIndex > 0) {
+    loadSong(state.setIndex, state.songIndex - 1);
+  } else if (state.setIndex > 0) {
+    // Go to last song of previous set
+    const prevSet = state.setIndex - 1;
+    loadSong(prevSet, GIG.sets[prevSet].songs.length - 1);
+  }
+});
+el.nextSong.addEventListener('click', () => {
+  const songs = currentSet().songs;
+  if (state.songIndex < songs.length - 1) {
+    loadSong(state.setIndex, state.songIndex + 1);
+  } else if (state.setIndex < GIG.sets.length - 1) {
+    // End-of-set handoff
+    openSetCompleteModal();
+  } else {
+    // End of gig
+    openSetCompleteModal(true);
+  }
+});
+
+// Set complete modal
+function openSetCompleteModal(gigComplete) {
+  if (gigComplete) {
+    el.modalSubtitle.textContent = 'Gig Complete';
+    el.modalMeta.textContent = 'You have finished the last song of the gig.';
+    el.modalStart.hidden = true;
+  } else {
+    const nextSet = GIG.sets[state.setIndex + 1];
+    el.modalSubtitle.textContent = currentSet().name + ' Complete';
+    el.modalMeta.textContent = 'Next up: ' + nextSet.name + ' (' + nextSet.songs.length + ' songs)';
+    el.modalStart.hidden = false;
+    el.modalStart.textContent = 'Start ' + nextSet.name;
+  }
+  el.modal.classList.add('open');
+}
+el.modalCancel.addEventListener('click', () => el.modal.classList.remove('open'));
+el.modalStart.addEventListener('click', () => {
+  el.modal.classList.remove('open');
+  loadSong(state.setIndex + 1, 0);
+});
+
+// Song picker dropdown
+function openSongPicker()  { el.songPickerMenu.classList.add('open'); }
+function closeSongPicker() { el.songPickerMenu.classList.remove('open'); }
+el.songPickerBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  el.songPickerMenu.classList.toggle('open');
+});
+document.addEventListener('click', e => {
+  if (!el.songPickerMenu.contains(e.target) && e.target !== el.songPickerBtn) closeSongPicker();
+});
+
+// Sidebar toggle (mobile)
+const tocToggle = document.getElementById('toc-toggle');
+const tocSidebar = document.getElementById('toc-sidebar');
+if (tocToggle) {
+  tocToggle.addEventListener('click', e => {
+    e.stopPropagation();
+    tocSidebar.classList.toggle('open');
+  });
+}
+// Close sidebar when clicking outside on mobile
+document.addEventListener('click', e => {
+  if (tocSidebar && !tocSidebar.contains(e.target) && e.target !== tocToggle) {
+    tocSidebar.classList.remove('open');
+  }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+  if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  else if (e.key === '+' || e.key === '=') el.transUp.click();
+  else if (e.key === '-' || e.key === '_') el.transDown.click();
+  else if (e.key === 'n' || e.key === 'N') el.nextSong.click();
+  else if (e.key === 'p' || e.key === 'P') el.prevSong.click();
+});
+
+// Init
+loadSong(0, 0);
+</script>
+</body>
+</html>
