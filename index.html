@@ -395,6 +395,41 @@
   }
   .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .controls .sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+
+  /* Dynamic section jump buttons (built from current song's chord chart) */
+  .section-btns {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+    align-items: center;
+    min-width: 0;
+  }
+  .section-btn {
+    background: #ffffff;
+    color: var(--fg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+  }
+  .section-btn:hover { background: var(--chip-bg); border-color: #d1d5db; }
+  .section-btn.active {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+  }
+  .section-btns:empty::before {
+    content: 'No sections in this song';
+    color: var(--muted);
+    font-size: 12px;
+    font-style: italic;
+  }
   .speed-row {
     display: flex; align-items: center; gap: 12px;
     color: var(--muted); font-size: 13px;
@@ -536,9 +571,7 @@
       <button class="btn" id="playBtn">▶ Play</button>
       <button class="btn" id="restartBtn">⟲ Restart</button>
       <div class="sep"></div>
-      <button class="btn" data-section="verse">Verse</button>
-      <button class="btn" data-section="chorus">Chorus</button>
-      <button class="btn" data-section="bridge">Bridge</button>
+      <div class="section-btns" id="sectionBtns"></div>
     </div>
     <div class="speed-row">
       <span>Scroll speed</span>
@@ -2498,6 +2531,29 @@ function renderTOC() {
   });
 }
 
+// Build a button for every section in the current song's chord chart.
+// Each button jumps directly to that specific section (by line index).
+function renderSectionButtons() {
+  const container = document.getElementById('sectionBtns');
+  container.innerHTML = '';
+  state.parsed.forEach((node, lineIdx) => {
+    if (node.type !== 'section') return;
+    const btn = document.createElement('button');
+    btn.className = 'section-btn';
+    btn.textContent = node.label;
+    btn.dataset.lineIndex = lineIdx;
+    btn.addEventListener('click', () => {
+      const sectionEl = el.chart.querySelector('.line.section[data-line-index="' + lineIdx + '"]');
+      if (sectionEl) {
+        const target = sectionEl.offsetTop - el.chart.clientHeight * 0.12;
+        el.chart.scrollTop = target;
+        state.virtualScroll = target;
+      }
+    });
+    container.appendChild(btn);
+  });
+}
+
 function loadSong(setIdx, songIdx) {
   state.setIndex = Math.max(0, Math.min(GIG.sets.length - 1, setIdx));
   const songs = currentSet().songs;
@@ -2515,6 +2571,7 @@ function loadSong(setIdx, songIdx) {
   renderTopbar();
   renderBeats();
   renderChart();
+  renderSectionButtons();
   renderTOC();
   el.chart.scrollTop = 0;
   state.virtualScroll = 0;
@@ -2641,12 +2698,21 @@ function updateHighlight() {
   const lines = el.chart.querySelectorAll('.line');
   const chartTop = el.chart.getBoundingClientRect().top;
   let active = -1;
+  let activeSectionLineIdx = -1;
   for (let i = 0; i < lines.length; i++) {
     const r = lines[i].getBoundingClientRect();
     const rel = { top: r.top - chartTop, bottom: r.bottom - chartTop };
-    if (rel.top <= playheadY && rel.bottom >= playheadY) { active = i; break; }
+    if (rel.top <= playheadY && rel.bottom >= playheadY) { active = i; }
+    // Track the most-recent section above (or at) the playhead
+    if (lines[i].classList.contains('section') && rel.top <= playheadY) {
+      activeSectionLineIdx = parseInt(lines[i].dataset.lineIndex, 10);
+    }
   }
   lines.forEach((l, i) => l.classList.toggle('active', i === active));
+  // Highlight the corresponding section button
+  document.querySelectorAll('.section-btn').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.lineIndex, 10) === activeSectionLineIdx);
+  });
 }
 
 function updateProgress() {
@@ -2712,22 +2778,8 @@ function togglePlay(force) {
   if (next) { state.metroStart = performance.now(); state.currentBeat = -1; }
 }
 el.playBtn.addEventListener('click', () => togglePlay());
-el.restartBtn.addEventListener('click', () => { el.chart.scrollTop = 0; togglePlay(false); });
-
-document.querySelectorAll('[data-section]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const target = btn.dataset.section;
-    const sections = el.chart.querySelectorAll('.line.section[data-section="' + target + '"]');
-    if (!sections.length) return;
-    const playheadAbs = el.chart.scrollTop + el.chart.clientHeight * 0.12;
-    let next = null;
-    for (const s of sections) {
-      if (s.offsetTop > playheadAbs + 4) { next = s; break; }
-    }
-    if (!next) next = sections[0];
-    el.chart.scrollTop = next.offsetTop - el.chart.clientHeight * 0.12;
-  });
-});
+el.restartBtn.addEventListener('click', () => { el.chart.scrollTop = 0; state.virtualScroll = 0; togglePlay(false); });
+// Note: dynamic section buttons are wired up per-button inside renderSectionButtons()
 
 el.transUp.addEventListener('click', () => {
   state.transposeOffset = Math.min(state.transposeOffset + 1, 11);
