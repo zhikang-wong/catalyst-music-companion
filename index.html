@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Gigging Companion — WN Catalyst Gig 4</title>
+<title>Catalyst — Gig 4</title>
 <style>
   :root {
     --bg: #faf9f6;
@@ -169,17 +169,17 @@
     font-weight: 500;
   }
 
-  /* Gig bar — top strip with gig name + set tabs */
+  /* Gig bar — gig name left + set tabs centered */
   .gigbar {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 10px 20px;
+    padding: 8px 16px;
     background: #ffffff;
     border-bottom: 1px solid var(--border);
+    gap: 10px;
   }
-  .gig-name { font-weight: 700; font-size: 15px; }
-  .set-tabs { display: flex; gap: 4px; }
+  .gig-name { font-weight: 700; font-size: 12px; color: var(--muted); flex-shrink: 0; }
+  .set-tabs { display: flex; gap: 4px; flex: 1; justify-content: center; }
   .set-tab {
     background: transparent;
     border: 1px solid transparent;
@@ -245,20 +245,33 @@
     letter-spacing: 0.05em;
   }
 
-  /* Song / control top bar */
+  /* Song / control top bar — two compact rows */
   .topbar {
     display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 10px 20px;
+    flex-direction: column;
+    gap: 6px;
+    padding: 7px 16px;
     background: var(--panel);
     border-bottom: 1px solid var(--border);
+  }
+  .topbar-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  .topbar-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     flex-wrap: wrap;
   }
-  .song-meta { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
-  .song-title { font-size: 18px; font-weight: 600; }
-  .song-artist { color: var(--muted); font-size: 14px; }
-  .song-pos { color: var(--muted); font-size: 12px; margin-left: 6px; }
+  .topbar-controls .sep { width: 1px; height: 22px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
+  .song-meta { display: flex; align-items: baseline; gap: 6px; min-width: 0; flex: 1; overflow: hidden; }
+  .song-title { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .song-artist { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .song-pos { display: none; }
   .draft-badge {
     background: var(--draft);
     color: #ffffff;
@@ -271,21 +284,22 @@
   }
   .meta-chip {
     background: var(--chip-bg);
-    padding: 5px 10px;
+    padding: 3px 8px;
     border-radius: 6px;
-    font-size: 13px;
+    font-size: 11px;
     color: var(--muted);
     white-space: nowrap;
+    flex-shrink: 0;
   }
-  .meta-chip strong { color: var(--fg); margin-left: 4px; }
+  .meta-chip strong { color: var(--fg); margin-left: 3px; }
 
   .btn {
     background: #ffffff;
     color: var(--fg);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 14px;
+    border-radius: 7px;
+    padding: 5px 11px;
+    font-size: 13px;
     cursor: pointer;
     font-family: inherit;
     transition: background 0.12s, border-color 0.12s;
@@ -294,28 +308,29 @@
   .btn:active { transform: translateY(1px); }
   .btn.active { background: var(--accent); color: #ffffff; border-color: var(--accent); }
   .btn.primary { background: var(--accent); color: #ffffff; border-color: var(--accent); font-weight: 600; }
-  .btn.icon { padding: 8px 14px; font-size: 18px; min-width: 44px; }
+  .btn.icon { padding: 5px 10px; font-size: 15px; min-width: 34px; }
 
-  .transpose { display: flex; align-items: center; gap: 6px; margin-left: auto; }
-  .song-switcher { display: flex; gap: 6px; }
+  .transpose { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .song-switcher { display: flex; gap: 4px; flex-shrink: 0; }
 
   /* Beat-dots metronome */
   .beats {
     display: flex;
-    gap: 10px;
+    gap: 6px;
     align-items: center;
-    padding: 6px 14px;
+    padding: 4px 10px;
     background: var(--chip-bg);
     border-radius: 20px;
     border: 1px solid var(--border);
+    flex-shrink: 0;
   }
   .beat {
-    width: 12px; height: 12px;
+    width: 9px; height: 9px;
     border-radius: 50%;
     background: var(--beat-idle);
     transition: background 80ms ease, transform 80ms ease, box-shadow 80ms ease;
   }
-  .beat.downbeat { width: 16px; height: 16px; }
+  .beat.downbeat { width: 12px; height: 12px; }
   .beat.active { background: var(--accent); transform: scale(1.15); }
   .beat.downbeat.active { box-shadow: 0 0 12px rgba(217,119,6,0.55); }
 
@@ -530,13 +545,10 @@
   .footer {
     background: var(--panel);
     border-top: 1px solid var(--border);
-    padding: 12px 20px;
+    padding: 8px 16px;
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    align-items: center;
   }
-  .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .controls .sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
 
   /* Dynamic section jump buttons (built from current song's chord chart) */
   .section-btns {
@@ -670,36 +682,42 @@
   <div class="gigbar">
     <div class="gig-name" id="gigName">—</div>
     <div class="set-tabs" id="setTabs"></div>
-    <div class="song-picker-wrap">
-      <button class="song-picker-btn" id="songPickerBtn">Songs in set ▾</button>
-      <div class="song-picker-menu" id="songPickerMenu"></div>
-    </div>
   </div>
 
-  <!-- Song top bar -->
+  <!-- Song top bar — two rows -->
   <div class="topbar">
-    <div class="song-meta">
-      <div class="song-title" id="songTitle">—</div>
-      <div class="song-artist" id="songArtist"></div>
-      <div class="song-pos" id="songPos"></div>
-      <span class="draft-badge" id="draftBadge" hidden>DRAFT</span>
-      <span class="edited-badge" id="editedBadge" hidden>EDITED</span>
+    <!-- Row 1: song info + meta + controls -->
+    <div class="topbar-main">
+      <div class="song-meta">
+        <div class="song-title" id="songTitle">—</div>
+        <div class="song-artist" id="songArtist"></div>
+        <div class="song-pos" id="songPos"></div>
+        <span class="draft-badge" id="draftBadge" hidden>DRAFT</span>
+        <span class="edited-badge" id="editedBadge" hidden>EDITED</span>
+      </div>
+      <div class="meta-chip">Key<strong id="songKey">—</strong></div>
+      <div class="meta-chip">BPM<strong id="songBpm">—</strong></div>
+      <div class="meta-chip">Time<strong id="songTime">4/4</strong></div>
+      <div class="beats" id="beats"></div>
+      <div class="transpose">
+        <span class="meta-chip">±<strong id="transOffset">0</strong></span>
+        <button class="btn icon" id="transDown">−</button>
+        <button class="btn icon" id="transUp">+</button>
+      </div>
+      <div class="song-switcher">
+        <button class="btn icon" id="editBtn" title="Edit chord chart">✏️</button>
+        <button class="btn icon" id="resetEditBtn" hidden title="Reset edits">↺</button>
+        <button class="btn icon" id="exportEditsBtn" title="Export edits">⬆</button>
+        <button class="btn icon" id="prevSong" title="Previous song">‹</button>
+        <button class="btn icon" id="nextSong" title="Next song">›</button>
+      </div>
     </div>
-    <div class="meta-chip">Key<strong id="songKey">—</strong></div>
-    <div class="meta-chip">BPM<strong id="songBpm">—</strong></div>
-    <div class="meta-chip">Time<strong id="songTime">4/4</strong></div>
-    <div class="beats" id="beats"></div>
-    <div class="transpose">
-      <span class="meta-chip">Transpose<strong id="transOffset">0</strong></span>
-      <button class="btn icon" id="transDown">−</button>
-      <button class="btn icon" id="transUp">+</button>
-    </div>
-    <div class="song-switcher">
-      <button class="btn" id="editBtn" title="Edit chord chart (autosaves locally)">✏️ Edit</button>
-      <button class="btn" id="resetEditBtn" hidden title="Discard edits and restore original chart">↺ Reset</button>
-      <button class="btn" id="exportEditsBtn" title="Copy all saved edits to clipboard so they can be baked into the source">⬆ Export edits</button>
-      <button class="btn" id="prevSong">‹ Prev</button>
-      <button class="btn" id="nextSong">Next ›</button>
+    <!-- Row 2: play + section pills -->
+    <div class="topbar-controls">
+      <button class="btn" id="playBtn">▶ Play</button>
+      <button class="btn icon" id="restartBtn" title="Restart">⟲</button>
+      <div class="sep"></div>
+      <div class="section-btns" id="sectionBtns"></div>
     </div>
   </div>
 
@@ -721,20 +739,14 @@
     <div class="chart" id="chart"></div>
   </div>
 
-  <!-- Footer -->
+  <!-- Footer — speed only -->
   <div class="footer">
-    <div class="controls">
-      <button class="btn" id="playBtn">▶ Play</button>
-      <button class="btn" id="restartBtn">⟲ Restart</button>
-      <div class="sep"></div>
-      <div class="section-btns" id="sectionBtns"></div>
-    </div>
     <div class="speed-row">
       <span>Scroll speed</span>
       <input type="range" id="speedSlider" min="10" max="120" value="36" />
       <span id="speedLabel">36 px/s</span>
       <span class="help" style="margin-left:auto">
-        <kbd>Space</kbd> play · <kbd>+</kbd>/<kbd>−</kbd> transpose · <kbd>N</kbd>/<kbd>P</kbd> next/prev
+        <kbd>Space</kbd> play · <kbd>+</kbd>/<kbd>−</kbd> key · <kbd>N</kbd>/<kbd>P</kbd> song
       </span>
     </div>
   </div>
@@ -761,7 +773,7 @@
 
 // ----- THE GIG -----------------------------------------------
 const GIG = {
-  name: "WN Catalyst — Gig 4",
+  name: "Catalyst — Gig 4",
   sets: [
     {
       name: "Set 1",
@@ -3135,8 +3147,8 @@ function currentSong() { return currentSet().songs[state.songIndex]; }
 const el = {
   gigName: document.getElementById('gigName'),
   setTabs: document.getElementById('setTabs'),
-  songPickerBtn: document.getElementById('songPickerBtn'),
-  songPickerMenu: document.getElementById('songPickerMenu'),
+  songPickerBtn: null,
+  songPickerMenu: null,
   title: document.getElementById('songTitle'),
   artist: document.getElementById('songArtist'),
   pos: document.getElementById('songPos'),
@@ -3234,34 +3246,7 @@ function renderGigBar() {
   });
 }
 
-function renderSongPicker() {
-  el.songPickerMenu.innerHTML = '';
-  const songs = currentSet().songs;
-  songs.forEach((song, idx) => {
-    const item = document.createElement('div');
-    item.className = 'picker-item' + (idx === state.songIndex ? ' current' : '');
-    const num = document.createElement('span');
-    num.className = 'picker-num';
-    num.textContent = (idx + 1) + '.';
-    const title = document.createElement('span');
-    title.className = 'picker-title';
-    title.textContent = song.title;
-    item.appendChild(num);
-    item.appendChild(title);
-    if (song.draft) {
-      const b = document.createElement('span');
-      b.className = 'picker-badge';
-      b.textContent = 'DRAFT';
-      item.appendChild(b);
-    }
-    item.addEventListener('click', () => {
-      loadSong(state.setIndex, idx);
-      closeSongPicker();
-    });
-    el.songPickerMenu.appendChild(item);
-  });
-  el.songPickerBtn.textContent = currentSet().name + ' · ' + (state.songIndex + 1) + ' of ' + songs.length + ' ▾';
-}
+function renderSongPicker() { /* removed — sidebar TOC handles navigation */ }
 
 // Render the variant tab bar (Chords / Bass / Drums etc.).
 // Hidden for songs that have no variants beyond 'chords'.
@@ -3847,16 +3832,7 @@ el.modalStart.addEventListener('click', () => {
   loadSong(state.setIndex + 1, 0);
 });
 
-// Song picker dropdown
-function openSongPicker()  { el.songPickerMenu.classList.add('open'); }
-function closeSongPicker() { el.songPickerMenu.classList.remove('open'); }
-el.songPickerBtn.addEventListener('click', e => {
-  e.stopPropagation();
-  el.songPickerMenu.classList.toggle('open');
-});
-document.addEventListener('click', e => {
-  if (!el.songPickerMenu.contains(e.target) && e.target !== el.songPickerBtn) closeSongPicker();
-});
+// Note: song picker removed — navigation via sidebar TOC + ‹/› buttons
 
 // Sidebar toggle (mobile)
 const tocToggle = document.getElementById('toc-toggle');
