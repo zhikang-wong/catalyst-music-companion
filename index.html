@@ -585,10 +585,11 @@
     font-style: italic;
   }
   .speed-row {
-    display: flex; align-items: center; gap: 12px;
-    color: var(--muted); font-size: 13px;
+    display: flex; align-items: center; gap: 8px;
+    color: var(--muted); font-size: 11px;
+    flex-shrink: 0;
   }
-  .speed-row input[type=range] { flex: 1; max-width: 320px; accent-color: var(--accent); }
+  .speed-row input[type=range] { width: 100px; max-width: 140px; accent-color: var(--accent); }
   .help { color: var(--muted); font-size: 11px; text-align: right; }
   .help kbd {
     background: var(--chip-bg); border: 1px solid var(--border);
@@ -712,12 +713,18 @@
         <button class="btn icon" id="nextSong" title="Next song">›</button>
       </div>
     </div>
-    <!-- Row 2: play + section pills -->
+    <!-- Row 2: play + section pills + scroll speed -->
     <div class="topbar-controls">
       <button class="btn" id="playBtn">▶ Play</button>
       <button class="btn icon" id="restartBtn" title="Restart">⟲</button>
       <div class="sep"></div>
       <div class="section-btns" id="sectionBtns"></div>
+      <div class="sep" style="margin-left:auto"></div>
+      <div class="speed-row" style="margin-left:0">
+        <span>Scroll</span>
+        <input type="range" id="speedSlider" min="10" max="120" value="36" />
+        <span id="speedLabel">36 px/s</span>
+      </div>
     </div>
   </div>
 
@@ -739,17 +746,7 @@
     <div class="chart" id="chart"></div>
   </div>
 
-  <!-- Footer — speed only -->
-  <div class="footer">
-    <div class="speed-row">
-      <span>Scroll speed</span>
-      <input type="range" id="speedSlider" min="10" max="120" value="36" />
-      <span id="speedLabel">36 px/s</span>
-      <span class="help" style="margin-left:auto">
-        <kbd>Space</kbd> play · <kbd>+</kbd>/<kbd>−</kbd> key · <kbd>N</kbd>/<kbd>P</kbd> song
-      </span>
-    </div>
-  </div>
+  <!-- Footer removed — all controls now in topbar -->
 
   <!-- Set complete modal -->
   <div class="modal-overlay" id="setCompleteModal">
