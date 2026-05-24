@@ -27,7 +27,7 @@
     font-family: -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", sans-serif;
     display: grid;
     grid-template-columns: 280px 1fr;
-    grid-template-rows: auto auto auto 1fr auto;
+    grid-template-rows: auto auto auto auto 1fr auto;
     height: 100vh;
     overflow: hidden;
   }
@@ -313,25 +313,34 @@
   .transpose { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
   .song-switcher { display: flex; gap: 4px; flex-shrink: 0; }
 
-  /* Beat-dots metronome */
+  /* Metronome bar — own row above the progress strip */
+  .metronome-bar {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    grid-column: 2;
+  }
   .beats {
     display: flex;
-    gap: 6px;
+    gap: 14px;
     align-items: center;
-    padding: 4px 10px;
+    padding: 6px 20px;
     background: var(--chip-bg);
-    border-radius: 20px;
+    border-radius: 24px;
     border: 1px solid var(--border);
-    flex-shrink: 0;
   }
   .beat {
-    width: 9px; height: 9px;
+    width: 16px; height: 16px;
     border-radius: 50%;
     background: var(--beat-idle);
     transition: background 80ms ease, transform 80ms ease, box-shadow 80ms ease;
   }
-  .beat.downbeat { width: 12px; height: 12px; }
-  .beat.active { background: var(--accent); transform: scale(1.15); }
+  .beat.downbeat { width: 20px; height: 20px; }
+  .beat.active { background: var(--accent); transform: scale(1.2); }
+  .beat.downbeat.active { box-shadow: 0 0 10px rgba(217,119,6,0.6); }
   .beat.downbeat.active { box-shadow: 0 0 12px rgba(217,119,6,0.55); }
 
   /* Progress strip */
@@ -498,6 +507,7 @@
   }
 
   .playhead {
+    display: none; /* removed — was the amber dashed line across the chart */
     position: absolute;
     left: 0; right: 0;
     top: 12%;
@@ -621,7 +631,7 @@
   .modal-buttons { display: flex; gap: 10px; justify-content: center; }
 
   /* Main content area spans column 2 */
-  .gigbar, .topbar, .progress-strip, .variant-bar, .chart-wrap, .footer {
+  .gigbar, .topbar, .metronome-bar, .progress-strip, .variant-bar, .chart-wrap, .footer {
     grid-column: 2;
   }
 
@@ -652,7 +662,7 @@
       display: block;
     }
 
-    .gigbar, .topbar, .progress-strip, .variant-bar, .chart-wrap, .footer {
+    .gigbar, .topbar, .metronome-bar, .progress-strip, .variant-bar, .chart-wrap, .footer {
       grid-column: 1;
     }
   }
@@ -699,7 +709,6 @@
       <div class="meta-chip">Key<strong id="songKey">—</strong></div>
       <div class="meta-chip">BPM<strong id="songBpm">—</strong></div>
       <div class="meta-chip">Time<strong id="songTime">4/4</strong></div>
-      <div class="beats" id="beats"></div>
       <div class="transpose">
         <span class="meta-chip">±<strong id="transOffset">0</strong></span>
         <button class="btn icon" id="transDown">−</button>
@@ -726,6 +735,11 @@
         <span id="speedLabel">36 px/s</span>
       </div>
     </div>
+  </div>
+
+  <!-- Metronome bar -->
+  <div class="metronome-bar">
+    <div class="beats" id="beats"></div>
   </div>
 
   <!-- Progress strip -->
