@@ -300,6 +300,32 @@
   }
   .progress-time.remaining { text-align: right; }
 
+  /* Variant tab bar */
+  .variant-bar {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 16px;
+    grid-column: 2;
+  }
+  .variant-tabs { display: flex; gap: 4px; }
+  .variant-tab {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--muted);
+  }
+  .variant-tab:hover { background: var(--chip-bg); }
+  .variant-tab.active {
+    background: var(--chord);
+    color: #fff;
+    border-color: var(--chord);
+  }
+
   /* Chart */
   .chart-wrap { flex: 1; overflow: hidden; position: relative; }
   .chart {
@@ -532,7 +558,7 @@
   .modal-buttons { display: flex; gap: 10px; justify-content: center; }
 
   /* Main content area spans column 2 */
-  .gigbar, .topbar, .progress-strip, .chart-wrap, .footer {
+  .gigbar, .topbar, .progress-strip, .variant-bar, .chart-wrap, .footer {
     grid-column: 2;
   }
 
@@ -563,7 +589,7 @@
       display: block;
     }
 
-    .gigbar, .topbar, .progress-strip, .chart-wrap, .footer {
+    .gigbar, .topbar, .progress-strip, .variant-bar, .chart-wrap, .footer {
       grid-column: 1;
     }
   }
@@ -616,6 +642,7 @@
     <div class="song-switcher">
       <button class="btn" id="editBtn" title="Edit chord chart (autosaves locally)">✏️ Edit</button>
       <button class="btn" id="resetEditBtn" hidden title="Discard edits and restore original chart">↺ Reset</button>
+      <button class="btn" id="exportEditsBtn" title="Copy all saved edits to clipboard so they can be baked into the source">⬆ Export edits</button>
       <button class="btn" id="prevSong">‹ Prev</button>
       <button class="btn" id="nextSong">Next ›</button>
     </div>
@@ -626,6 +653,11 @@
     <span class="progress-time" id="elapsedTime">0:00</span>
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
     <span class="progress-time remaining" id="remainingTime">-0:00</span>
+  </div>
+
+  <!-- Variant tab bar (hidden when song has no variants) -->
+  <div class="variant-bar" id="variantBar" hidden>
+    <div class="variant-tabs" id="variantTabs"></div>
   </div>
 
   <!-- Chart -->
@@ -883,9 +915,6 @@ Em
           title: "Die with a Smile", artist: "Lady Gaga & Bruno Mars",
           key: "B", bpm: 158, time: "4/4", durationSec: 251,
           chordPro: `
-Tab reference: source PDFs are bass + drums tabs.
-Chord chart below is the standard guitar version in B major.
-
 Intro
 B  F#  G#m  F#
 
@@ -968,6 +997,130 @@ If the world was ending, I'd wanna be next to you
 Outro
 B  F#  G#m  F#  B
 `.trim()
+          variants: {
+            bass: `
+          Die With A Smile — Bass Tab
+          Tuning: E A D G  ·  158 BPM  ·  4/4
+          
+          Intro
+          (tacet — 4 bars)
+          
+          Verse 1
+          (tacet — 8 bars)
+          
+          Pre-Chorus
+          G|-------------|-------------|
+          D|-------------|-------------|
+          A|-5---5~------|-------------|
+          E|-------------|-------------|
+          
+          G|-------------|-------------|
+          D|-------6-6---|-------2-----|
+          A|-5---5-----7-|-5---5---4-4-|
+          E|-------------|-------------|
+          
+          Chorus
+          G|------------|------------|------------|
+          D|--4-4-2-----|--4-4-2-----|--4-4-2-----|
+          A|-2-------2--|-2-------5--|------4--5--|
+          E|------------|------------|------------|
+          
+          G|------------|------------|
+          D|--4-4-2-----|--4-4-2-----|
+          A|-2-------2--|-0----------|
+          E|------------|------------|
+          
+          (Repeat chorus x 3, last bar resolves to open E string)
+          
+          Verse 2
+          (tacet — 8 bars, same feel as Verse 1)
+          
+          Pre-Chorus
+          (same as first pre-chorus)
+          
+          Chorus
+          (same as first chorus)
+          
+          Bridge
+          G|-------------|
+          D|--4-4-4-5----|
+          A|-2-----------|
+          E|-------------|
+          
+          (tacet 7-8 bars, then re-enters with same chorus groove)
+          
+          Last Chorus
+          (same chorus pattern x 4, building in dynamics)
+          
+          Outro
+          G|-----|
+          D|-----|
+          A|--2--|
+          E|-----|
+          
+          (4 bars on A-2, then fade)
+
+          `.trim(),
+            drums: `
+          Die With A Smile — Drum Reference
+          BPM: 158  ·  4/4
+          
+          Legend: K=kick  S=snare  H=hi-hat  O=open-hat  C=crash  R=ride
+          
+          Intro (4 bars)
+          K|x . . . x . . .|  (sparse kick on 1 and 3)
+          S|. . x . . . x .|
+          H|x x x x x x x x|  (soft, mf)
+          
+          Verse 1 (8 bars)
+          (tacet — completely silent)
+          
+          Pre-Chorus (enters mf)
+          K|x . . . x . . .|
+          S|. . x . . . x .|
+          H|x x x x x x x x|  (closed hi-hat, steady 8th notes)
+             (bar 2: open hat on the "&" of 4)
+          
+          K|x . . x . x . .|
+          S|. . x . . . x .|
+          O|. . . . . . . ^|  (open hat anticipates Chorus)
+          
+          Chorus (main groove — full energy)
+          K|x . . . x . x .|  (kick drives on 1, 2-&, 3, 4)
+          S|. . x . . . x .|
+          H|x x x x x x x x|
+          
+          (Every 2 bars, crash on beat 1)
+          C|x . . . . . . .|
+          
+          (Last bar of each chorus section: fill leading back in)
+          S|. . x . x x x .|  (snare fill)
+          K|x . . . x . . x|
+          
+          Verse 2
+          (tacet — completely silent)
+          
+          Pre-Chorus / Chorus
+          (same as first — build into Bridge)
+          
+          Bridge (7 bars tacet, then re-enter)
+          K|x . . . x . . .|  (soft re-entry)
+          S|. . x . . . x .|
+          H|x x x x x x x x|
+          (build over 4 bars into Final Chorus)
+          
+          Last Chorus
+          (same main groove, crash every bar in the climax)
+          C|x . . . x . . . x . . . x . . .|
+          
+          Outro (5 bars, decrescendo)
+          K|x . . . x . . .|
+          S|. . x . . . x .|
+          H|x x x x x x x x|
+          (final hit: crash + kick on beat 1, then silence)
+
+          `.trim(),
+          },
         },
         {
           title: "孤勇者", artist: "陈奕迅",
@@ -1112,9 +1265,7 @@ E F# C#
           title: "Locked Out of Heaven", artist: "Bruno Mars",
           key: "Dm", bpm: 144, time: "4/4", durationSec: 233,
           chordPro: `
-Tab reference: source PDF is the official bass tab (E A D G, q = 144).
-Chord chart below is the standard guitar version. Original is in D#m;
-play in Dm with capo 1, or play as written without capo a half-step down.
+Note: Original key is D#m. Play as written in Dm (half-step down), or capo 1.
 
 Intro
 Dm
@@ -1219,6 +1370,73 @@ Oh, yeah, yeah, oh, yeah, yeah, yeah, yeah, ooh
                           Dm                                                Am
 Oh, oh, yeah, yeah, oh, yeah, yeah, yeah, yeah, ooh
 `.trim()
+          variants: {
+            bass: `
+          Locked Out Of Heaven — Bass Tab
+          Tuning: E A D G  ·  144 BPM  ·  4/4
+          
+          Intro (Iconic riff — played throughout Verse)
+          G|------------------------|
+          D|------------------------|
+          A|-3-3-3-5-3--3-3-3-5-----|
+          E|-----------5---------6-5-1-3--|
+          
+          (Repeat riff 4x — straight, no fills)
+          
+          Verse 1
+          (Same bass riff as Intro, repeated)
+          G|------------------------|
+          D|------------------------|
+          A|-3-3-3-5-3--3-3-3-5-----|
+          E|-----------5---------6-5-1-3--|
+          
+          Pre-Chorus
+          G|------------------------|
+          D|------------------------|
+          A|-3-3-3-3--3-3-3-3--3-3--|
+          E|-1-1-1-1--3-3-3-3--5-5--|
+          
+          (Building into chorus, quarter-note pulse)
+          
+          Chorus
+          G|------------|------------|
+          D|-5--7---5-7-|-5--7---5-7-|  (upper register lift)
+          A|------------|------------|
+          E|------------|------------|
+          
+          G|------------|------------|
+          D|-3--3-3-3---|-1--1-1-1---|
+          A|------------|------------|
+          E|------------|------------|
+          
+          (Chorus riff repeats 4x)
+          
+          Verse 2
+          (Same as Verse 1)
+          
+          Pre-Chorus 2
+          (Same as Pre-Chorus 1)
+          
+          Chorus 2
+          (Same)
+          
+          Bridge
+          G|----------------------|
+          D|----------------------|
+          A|-8-8-8-8-8-8-8-8------|  (stays on octave A)
+          E|----------------------|
+          
+          (8 bars, then builds back into final chorus)
+          
+          Last Chorus
+          (Same chorus riff x 4, louder — final bar: big release on open E)
+          E|-0--|
+          
+          Outro
+          (Same intro riff, tapering off)
+
+          `.trim(),
+          },
         },
         {
           title: "看着我的眼睛说", artist: "—",
@@ -2618,25 +2836,32 @@ const CHORD_TOKEN_RE = /^\(?[A-G][b#]?(?:m|maj|min|sus|add|aug|dim|°|Δ|7|9|11|
 function detectSection(line) {
   const t = line.trim();
   if (!t) return null;
-  const lower = t.toLowerCase();
-  if (/^intro\b/.test(lower)) return { section: 'intro', label: t };
-  if (/^outro\b/.test(lower)) return { section: 'outro', label: t };
-  if (/^end(ing)?\b/.test(lower)) return { section: 'ending', label: t };
-  if (/^verse\b/.test(lower)) return { section: 'verse', label: t };
-  if (/^pre[-\s]?chorus\b/.test(lower)) return { section: 'prechorus', label: 'Pre-Chorus' };
-  if (/^post[-\s]?chorus\b/.test(lower)) return { section: 'chorus', label: t };
-  if (/^last\s*chorus\b/.test(lower)) return { section: 'chorus', label: t };
-  if (/^quiet\s*chorus\b/.test(lower)) return { section: 'chorus', label: t };
-  if (/^chorus\b/.test(lower)) return { section: 'chorus', label: t };
-  if (/^bridge\b/.test(lower)) return { section: 'bridge', label: t };
-  if (/^interlude\b/.test(lower)) return { section: 'interlude', label: t };
-  if (/^solo\b/.test(lower)) return { section: 'solo', label: t };
-  if (/^transition\b/.test(lower)) return { section: 'transition', label: t };
-  if (/^repeat\b/.test(lower)) return { section: 'repeat', label: t };
-  if (/^structure\b/.test(lower)) return { section: 'structure', label: t };
-  if (/^chord\s*overview\b/.test(lower)) return { section: 'comment', label: t };
-  if (/^whole\s*song\b/.test(lower)) return { section: 'comment', label: t };
-  if (/^core\b/.test(lower) && t.length < 10) return { section: 'verse', label: t };
+  // Strip [Bracket] style (e.g. UG copy-paste: [Pre-Chorus] → Pre-Chorus)
+  const inner = t.startsWith('[') && t.endsWith(']') ? t.slice(1, -1).trim() : t;
+  const lower = inner.toLowerCase();
+  const lbl = inner;  // preserve original capitalisation/numbering for display
+  if (/^intro\b/.test(lower)) return { section: 'intro', label: lbl };
+  if (/^outro\b/.test(lower)) return { section: 'outro', label: lbl };
+  if (/^end(ing)?\b/.test(lower)) return { section: 'ending', label: lbl };
+  if (/^verse\b/.test(lower)) return { section: 'verse', label: lbl };
+  if (/^pre[-\s]?chorus\b/.test(lower)) return { section: 'prechorus', label: lbl };
+  if (/^pre[-\s]?verse\b/.test(lower)) return { section: 'verse', label: lbl };
+  if (/^post[-\s]?chorus\b/.test(lower)) return { section: 'chorus', label: lbl };
+  if (/^last\s*chorus\b/.test(lower)) return { section: 'chorus', label: lbl };
+  if (/^quiet\s*chorus\b/.test(lower)) return { section: 'chorus', label: lbl };
+  if (/^refrain\b/.test(lower)) return { section: 'chorus', label: lbl };
+  if (/^chorus\b/.test(lower)) return { section: 'chorus', label: lbl };
+  if (/^hook\b/.test(lower)) return { section: 'chorus', label: lbl };
+  if (/^bridge\b/.test(lower)) return { section: 'bridge', label: lbl };
+  if (/^interlude\b/.test(lower)) return { section: 'interlude', label: lbl };
+  if (/^solo\b/.test(lower)) return { section: 'solo', label: lbl };
+  if (/^transition\b/.test(lower)) return { section: 'transition', label: lbl };
+  if (/^repeat\b/.test(lower)) return { section: 'repeat', label: lbl };
+  if (/^breakdown\b/.test(lower)) return { section: 'bridge', label: lbl };
+  if (/^structure\b/.test(lower)) return { section: 'structure', label: lbl };
+  if (/^chord\s*overview\b/.test(lower)) return { section: 'comment', label: lbl };
+  if (/^whole\s*song\b/.test(lower)) return { section: 'comment', label: lbl };
+  if (/^core\b/.test(lower) && inner.length < 10) return { section: 'verse', label: lbl };
   return null;
 }
 
@@ -2822,6 +3047,7 @@ const state = {
   pendingSetTransition: null,
   editMode: false,
   editSaveTimer: null,
+  chartVariant: 'chords',  // 'chords' | key in song.variants
 };
 
 function currentSet() { return GIG.sets[state.setIndex]; }
@@ -2861,7 +3087,10 @@ const el = {
   modalStart: document.getElementById('modalStart'),
   editBtn: document.getElementById('editBtn'),
   resetEditBtn: document.getElementById('resetEditBtn'),
+  exportEditsBtn: document.getElementById('exportEditsBtn'),
   editedBadge: document.getElementById('editedBadge'),
+  variantBar: document.getElementById('variantBar'),
+  variantTabs: document.getElementById('variantTabs'),
 };
 
 // ----- Edited chord chart persistence (localStorage) -----------
@@ -2888,6 +3117,22 @@ function effectiveChordPro(song) {
 }
 function hasEdits(song) {
   return getEditedChordPro(song) !== null;
+}
+
+// Collect all chart edits from localStorage and return JSON suitable for
+// copy-pasting back to the developer so edits can be baked into source.
+function exportAllEdits() {
+  const result = {};
+  try {
+    const prefix = 'chartEdit:' + GIG.name + ':';
+    for (let k of Object.keys(localStorage)) {
+      if (k.startsWith(prefix)) {
+        const key = k.slice(prefix.length);  // "Artist:Title"
+        result[key] = localStorage.getItem(k);
+      }
+    }
+  } catch (e) {}
+  return result;
 }
 
 // ----- Helpers ----------------------------------------------
@@ -2938,6 +3183,49 @@ function renderSongPicker() {
     el.songPickerMenu.appendChild(item);
   });
   el.songPickerBtn.textContent = currentSet().name + ' · ' + (state.songIndex + 1) + ' of ' + songs.length + ' ▾';
+}
+
+// Render the variant tab bar (Chords / Bass / Drums etc.).
+// Hidden for songs that have no variants beyond 'chords'.
+function renderVariantBar() {
+  const song = currentSong();
+  const variants = song.variants || {};
+  const variantKeys = Object.keys(variants);
+
+  if (variantKeys.length === 0) {
+    el.variantBar.hidden = true;
+    return;
+  }
+
+  el.variantBar.hidden = false;
+  el.variantTabs.innerHTML = '';
+
+  // Always show Chords first
+  const allVariants = [{ key: 'chords', label: '🎸 Chords' }, ...variantKeys.map(k => ({
+    key: k,
+    label: k === 'bass' ? '🎸 Bass' : k === 'drums' ? '🥁 Drums' : k.charAt(0).toUpperCase() + k.slice(1)
+  }))];
+
+  allVariants.forEach(({ key, label }) => {
+    const btn = document.createElement('button');
+    btn.className = 'variant-tab' + (state.chartVariant === key ? ' active' : '');
+    btn.textContent = label;
+    btn.addEventListener('click', () => {
+      state.chartVariant = key;
+      // Re-parse for the selected variant
+      const s = currentSong();
+      const src = state.chartVariant === 'chords'
+        ? effectiveChordPro(s)
+        : (s.variants && s.variants[state.chartVariant]) || '';
+      state.parsed = parseChordPro(preprocessChordChart(src));
+      renderVariantBar();
+      renderChart();
+      renderSectionButtons();
+      el.chart.scrollTop = 0;
+      state.virtualScroll = 0;
+    });
+    el.variantTabs.appendChild(btn);
+  });
 }
 
 function renderTOC() {
@@ -3010,6 +3298,7 @@ function loadSong(setIdx, songIdx) {
   const songs = currentSet().songs;
   state.songIndex = Math.max(0, Math.min(songs.length - 1, songIdx));
   const song = currentSong();
+  state.chartVariant = 'chords';  // always reset to chords on song load
   // Read either the saved edit or the original chord chart
   const sourceChordPro = effectiveChordPro(song);
   const src = sourceChordPro ? preprocessChordChart(sourceChordPro) : '';
@@ -3023,6 +3312,7 @@ function loadSong(setIdx, songIdx) {
   renderSongPicker();
   renderTopbar();
   renderBeats();
+  renderVariantBar();
   renderChart();
   renderSectionButtons();
   renderTOC();
@@ -3368,6 +3658,23 @@ el.editBtn.addEventListener('click', () => {
   else enterEditMode();
 });
 el.resetEditBtn.addEventListener('click', resetEditsForCurrentSong);
+
+el.exportEditsBtn.addEventListener('click', () => {
+  const edits = exportAllEdits();
+  const count = Object.keys(edits).length;
+  if (count === 0) {
+    alert('No local edits found. Edit a song with ✏️ Edit first.');
+    return;
+  }
+  const text = JSON.stringify(edits, null, 2);
+  navigator.clipboard.writeText(text).then(() => {
+    el.exportEditsBtn.textContent = '✓ Copied!';
+    setTimeout(() => { el.exportEditsBtn.textContent = '⬆ Export edits'; }, 2000);
+  }).catch(() => {
+    // Fallback for browsers that restrict clipboard
+    prompt('Copy these edits to send to your developer:', text);
+  });
+});
 // Note: dynamic section buttons are wired up per-button inside renderSectionButtons()
 
 el.transUp.addEventListener('click', () => {
