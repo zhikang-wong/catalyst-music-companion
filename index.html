@@ -390,6 +390,22 @@
   .chord-row { color: var(--chord); font-weight: 700; white-space: pre; }
   .lyric-row { white-space: pre; }
 
+  /* Chord-only progression rows (Intro / Interlude / Outro etc.) —
+     evenly-spaced chord chips instead of monospace-padded text. */
+  .line.chord-only { padding: 6px 8px; }
+  .chord-row.chord-only-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 28px;       /* row gap 4px, column gap 28px between chords */
+    white-space: normal;
+  }
+  .chord-row.chord-only-row .chord-token {
+    color: var(--chord);
+    font-weight: 700;
+    display: inline-block;
+  }
+
   .playhead {
     position: absolute;
     left: 0; right: 0;
@@ -3209,6 +3225,27 @@ function renderChart() {
       const lineDiv = document.createElement('div');
       lineDiv.className = 'line';
       lineDiv.dataset.lineIndex = i;
+
+      // Chord-only line (Intro/Interlude/Outro progressions): every part has
+      // a chord and no real lyric text. Render as evenly-spaced chord chips.
+      const isChordOnly = node.parts.length > 0
+        && node.parts.every(p => p.chord && (!p.text || /^\s*$/.test(p.text)));
+      if (isChordOnly) {
+        lineDiv.classList.add('chord-only');
+        const chordRow = document.createElement('div');
+        chordRow.className = 'chord-row chord-only-row';
+        for (const p of node.parts) {
+          const span = document.createElement('span');
+          span.className = 'chord-token';
+          span.textContent = transposeChord(p.chord, state.transposeOffset, useFlats);
+          chordRow.appendChild(span);
+        }
+        lineDiv.appendChild(chordRow);
+        el.chart.appendChild(lineDiv);
+        return;
+      }
+
+      // Mixed chord+lyric: existing column-aligned rendering
       let chordLine = '', lyricLine = '';
       for (const p of node.parts) {
         const t = p.chord ? transposeChord(p.chord, state.transposeOffset, useFlats) : '';
