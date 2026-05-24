@@ -313,6 +313,52 @@
   .chart::-webkit-scrollbar { width: 6px; }
   .chart::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
 
+  /* Edit-mode: textarea takes over the chart area */
+  .chart-editor {
+    width: 100%;
+    height: 100%;
+    border: none;
+    outline: none;
+    resize: none;
+    background: #fffaf0;
+    padding: 24px 28px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--fg);
+    tab-size: 4;
+    /* Ensure smooth scrolling on iPad */
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+  }
+  .chart-editor:focus {
+    background: #fef3c7;
+  }
+  .edit-hint {
+    position: absolute;
+    bottom: 8px;
+    right: 16px;
+    font-size: 11px;
+    color: var(--muted);
+    background: #ffffff;
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .edited-badge {
+    background: #d97706;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 8px;
+    margin-left: 4px;
+  }
+  .btn.editing { background: var(--accent); color: #fff; border-color: var(--accent); }
+
   .line {
     padding: 4px 8px;
     border-radius: 6px;
@@ -540,6 +586,7 @@
       <div class="song-artist" id="songArtist"></div>
       <div class="song-pos" id="songPos"></div>
       <span class="draft-badge" id="draftBadge" hidden>DRAFT</span>
+      <span class="edited-badge" id="editedBadge" hidden>EDITED</span>
     </div>
     <div class="meta-chip">Key<strong id="songKey">—</strong></div>
     <div class="meta-chip">BPM<strong id="songBpm">—</strong></div>
@@ -551,6 +598,8 @@
       <button class="btn icon" id="transUp">+</button>
     </div>
     <div class="song-switcher">
+      <button class="btn" id="editBtn" title="Edit chord chart (autosaves locally)">✏️ Edit</button>
+      <button class="btn" id="resetEditBtn" hidden title="Discard edits and restore original chart">↺ Reset</button>
       <button class="btn" id="prevSong">‹ Prev</button>
       <button class="btn" id="nextSong">Next ›</button>
     </div>
@@ -2755,6 +2804,8 @@ const state = {
   currentBeat: -1,
   virtualScroll: 0,  // float accumulator so fractional px/frame motion isn't lost
   pendingSetTransition: null,
+  editMode: false,
+  editSaveTimer: null,
 };
 
 function currentSet() { return GIG.sets[state.setIndex]; }
@@ -2792,7 +2843,36 @@ const el = {
   modalMeta: document.getElementById('modalMeta'),
   modalCancel: document.getElementById('modalCancel'),
   modalStart: document.getElementById('modalStart'),
+  editBtn: document.getElementById('editBtn'),
+  resetEditBtn: document.getElementById('resetEditBtn'),
+  editedBadge: document.getElementById('editedBadge'),
 };
+
+// ----- Edited chord chart persistence (localStorage) -----------
+// Edits are stored per-song under a stable storage key. The original
+// song.chordPro is the fallback when no edit exists.
+function editStorageKey(song) {
+  return 'chartEdit:' + GIG.name + ':' + (song.artist || '') + ':' + song.title;
+}
+function getEditedChordPro(song) {
+  try {
+    return localStorage.getItem(editStorageKey(song));
+  } catch (e) { return null; }
+}
+function saveEditedChordPro(song, text) {
+  try { localStorage.setItem(editStorageKey(song), text); }
+  catch (e) { console.warn('Could not save chart edit:', e); }
+}
+function clearEditedChordPro(song) {
+  try { localStorage.removeItem(editStorageKey(song)); } catch (e) {}
+}
+function effectiveChordPro(song) {
+  const edited = getEditedChordPro(song);
+  return edited !== null ? edited : (song.chordPro || '');
+}
+function hasEdits(song) {
+  return getEditedChordPro(song) !== null;
+}
 
 // ----- Helpers ----------------------------------------------
 function formatTime(s) {
@@ -2907,11 +2987,16 @@ function renderSectionButtons() {
 }
 
 function loadSong(setIdx, songIdx) {
+  // If we're navigating away while editing, commit and exit edit mode first
+  if (state.editMode) exitEditMode({ silent: true });
+
   state.setIndex = Math.max(0, Math.min(GIG.sets.length - 1, setIdx));
   const songs = currentSet().songs;
   state.songIndex = Math.max(0, Math.min(songs.length - 1, songIdx));
   const song = currentSong();
-  const src = song.chordPro ? preprocessChordChart(song.chordPro) : '';
+  // Read either the saved edit or the original chord chart
+  const sourceChordPro = effectiveChordPro(song);
+  const src = sourceChordPro ? preprocessChordChart(sourceChordPro) : '';
   state.parsed = parseChordPro(src);
   state.transposeOffset = 0;
   state.currentBeat = -1;
@@ -2931,7 +3016,7 @@ function loadSong(setIdx, songIdx) {
   // If song has durationSec, auto-calibrate scroll speed so the chart
   // scrolls end-to-end in exactly that time. Progress bar then shows
   // real elapsed/remaining time for the song.
-  if (song.durationSec && song.chordPro) {
+  if (song.durationSec && sourceChordPro) {
     // Defer one frame so layout has settled and scrollHeight is final
     requestAnimationFrame(() => {
       const scrollable = el.chart.scrollHeight - el.chart.clientHeight;
@@ -2951,9 +3036,117 @@ function renderTopbar() {
   el.artist.textContent = s.artist ? ' — ' + s.artist : '';
   el.pos.textContent = '(' + (state.songIndex + 1) + ' of ' + currentSet().songs.length + ' · ' + currentSet().name + ')';
   el.draftBadge.hidden = !s.draft;
+  el.editedBadge.hidden = !hasEdits(s);
+  el.resetEditBtn.hidden = !hasEdits(s);
   el.bpm.textContent = s.bpm;
   el.time.textContent = s.time;
   updateKey();
+}
+
+// ----- Inline chord chart editing -----------------------------
+// Toggle to a full-area textarea, auto-save on input (debounced).
+function enterEditMode() {
+  if (state.editMode) return;
+  const song = currentSong();
+  togglePlay(false);
+  state.editMode = true;
+  el.editBtn.textContent = '✓ Done';
+  el.editBtn.classList.add('editing');
+
+  // Replace chart contents with a textarea
+  el.chart.innerHTML = '';
+  el.chart.style.padding = '0';
+  el.chart.style.overflow = 'hidden';
+
+  const ta = document.createElement('textarea');
+  ta.id = 'chartEditor';
+  ta.className = 'chart-editor';
+  ta.spellcheck = false;
+  ta.autocapitalize = 'off';
+  ta.autocorrect = 'off';
+  ta.value = effectiveChordPro(song);
+  el.chart.appendChild(ta);
+
+  const hint = document.createElement('div');
+  hint.className = 'edit-hint';
+  hint.textContent = 'Edits autosave locally · tap Done to render';
+  el.chart.parentNode.appendChild(hint);
+  hint.id = 'editHint';
+
+  // Auto-save debounced 300ms
+  ta.addEventListener('input', () => {
+    clearTimeout(state.editSaveTimer);
+    state.editSaveTimer = setTimeout(() => {
+      const songNow = currentSong();
+      saveEditedChordPro(songNow, ta.value);
+      el.editedBadge.hidden = false;
+      el.resetEditBtn.hidden = false;
+    }, 300);
+  });
+
+  // Focus the textarea so iPad keyboard pops up immediately
+  setTimeout(() => ta.focus(), 50);
+}
+
+function exitEditMode(opts) {
+  if (!state.editMode) return;
+  opts = opts || {};
+  // Flush any pending save
+  clearTimeout(state.editSaveTimer);
+  const song = currentSong();
+  const ta = document.getElementById('chartEditor');
+  if (ta) saveEditedChordPro(song, ta.value);
+
+  state.editMode = false;
+  el.editBtn.textContent = '✏️ Edit';
+  el.editBtn.classList.remove('editing');
+  const hint = document.getElementById('editHint');
+  if (hint) hint.remove();
+  el.chart.style.padding = '';
+  el.chart.style.overflow = '';
+
+  if (!opts.silent) {
+    // Re-parse and re-render with the new source
+    const src = preprocessChordChart(effectiveChordPro(song));
+    state.parsed = parseChordPro(src);
+    renderChart();
+    renderSectionButtons();
+    el.editedBadge.hidden = !hasEdits(song);
+    el.resetEditBtn.hidden = !hasEdits(song);
+    // Recalibrate scroll speed since chart length may have changed
+    if (song.durationSec) {
+      requestAnimationFrame(() => {
+        const scrollable = el.chart.scrollHeight - el.chart.clientHeight;
+        if (scrollable > 0) {
+          const derived = scrollable / song.durationSec;
+          state.scrollSpeed = derived;
+          el.speed.value = Math.round(derived);
+          el.speedLabel.textContent = Math.round(derived) + ' px/s';
+        }
+      });
+    }
+  }
+}
+
+function resetEditsForCurrentSong() {
+  const song = currentSong();
+  if (!hasEdits(song)) return;
+  if (!confirm('Discard your edits to "' + song.title + '" and restore the original chord chart?')) return;
+  clearEditedChordPro(song);
+  if (state.editMode) {
+    // Refresh the textarea in place
+    const ta = document.getElementById('chartEditor');
+    if (ta) ta.value = song.chordPro || '';
+  }
+  el.editedBadge.hidden = true;
+  el.resetEditBtn.hidden = true;
+  // Re-parse from original and re-render if not in edit mode
+  if (!state.editMode) {
+    const src = preprocessChordChart(song.chordPro || '');
+    state.parsed = parseChordPro(src);
+    renderChart();
+    renderSectionButtons();
+  }
 }
 
 function updateKey() {
@@ -3131,13 +3324,22 @@ function togglePlay(force) {
 }
 el.playBtn.addEventListener('click', () => togglePlay());
 el.restartBtn.addEventListener('click', () => { el.chart.scrollTop = 0; state.virtualScroll = 0; togglePlay(false); });
+
+// Edit mode toggle + reset
+el.editBtn.addEventListener('click', () => {
+  if (state.editMode) exitEditMode();
+  else enterEditMode();
+});
+el.resetEditBtn.addEventListener('click', resetEditsForCurrentSong);
 // Note: dynamic section buttons are wired up per-button inside renderSectionButtons()
 
 el.transUp.addEventListener('click', () => {
+  if (state.editMode) return;  // transpose only applies to rendered view
   state.transposeOffset = Math.min(state.transposeOffset + 1, 11);
   updateKey(); renderChart();
 });
 el.transDown.addEventListener('click', () => {
+  if (state.editMode) return;
   state.transposeOffset = Math.max(state.transposeOffset - 1, -11);
   updateKey(); renderChart();
 });
