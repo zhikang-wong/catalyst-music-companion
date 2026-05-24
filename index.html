@@ -2707,7 +2707,9 @@ function parseChordPro(src) {
 // ----- Transpose (unchanged) --------------------------------
 const SHARPS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const FLATS  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
-const FLAT_KEYS = new Set(['F','Bb','Eb','Ab','Db','Gb','Cb','Dm','Gm','Cm','Fm','Bbm','Ebm','Abm']);
+// User preference: always prefer sharps (F# over Gb, A# over Bb, D# over Eb, etc).
+// Source charts may still be written with flats — they'll be normalised to sharps on display.
+const FLAT_KEYS = new Set();
 
 function noteIndex(n) {
   const s = SHARPS.indexOf(n); if (s !== -1) return s;
