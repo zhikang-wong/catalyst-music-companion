@@ -3065,6 +3065,7 @@ const state = {
   beatsPerBar: 4,
   currentBeat: -1,
   virtualScroll: 0,  // float accumulator so fractional px/frame motion isn't lost
+  isProgrammaticScroll: false,  // true while tick is setting scrollTop
   pendingSetTransition: null,
   editMode: false,
   editSaveTimer: null,
@@ -3637,7 +3638,9 @@ function tick(ts) {
   state.lastTs = ts;
   if (state.playing) {
     state.virtualScroll += state.scrollSpeed * dt;
+    state.isProgrammaticScroll = true;
     el.chart.scrollTop = state.virtualScroll;
+    state.isProgrammaticScroll = false;
     if (state.virtualScroll >= el.chart.scrollHeight - el.chart.clientHeight - 1) togglePlay(false);
   } else {
     // While paused / manually scrolling, keep virtualScroll synced to real position
@@ -3677,6 +3680,14 @@ function togglePlay(force) {
 }
 el.playBtn.addEventListener('click', () => togglePlay());
 el.restartBtn.addEventListener('click', () => { el.chart.scrollTop = 0; state.virtualScroll = 0; togglePlay(false); });
+
+// When autoscroll is playing, a manual scroll (swipe / drag) that wasn't
+// triggered by the tick should move the autoscroll origin to that position.
+el.chart.addEventListener('scroll', () => {
+  if (!state.isProgrammaticScroll && state.playing) {
+    state.virtualScroll = el.chart.scrollTop;
+  }
+});
 
 // Edit mode toggle + reset
 el.editBtn.addEventListener('click', () => {
