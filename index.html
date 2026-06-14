@@ -745,6 +745,7 @@
       </div>
       <button class="btn icon" id="prevSong" title="Previous song">‹</button>
       <button class="btn icon" id="nextSong" title="Next song">›</button>
+      <button class="btn primary" id="playBtn">▶ Play</button>
       <button class="btn" id="controlsToggle" title="Show / hide controls">⚙ ▾</button>
     </div>
 
@@ -752,7 +753,6 @@
     <div class="topbar-controls" id="topbarControls">
       <!-- Playback group -->
       <div class="ctrl-group">
-        <button class="btn primary" id="playBtn">▶ Play</button>
         <button class="btn icon" id="restartBtn" title="Restart">⟲</button>
         <div class="speed-row">
           <span>Scroll</span>
@@ -3881,7 +3881,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260614f';
+const SW_BUILD = '20260614g';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
