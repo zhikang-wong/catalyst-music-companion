@@ -731,6 +731,12 @@
       <div class="section-btns" id="sectionBtns"></div>
       <div class="sep" style="margin-left:auto"></div>
       <div class="speed-row" style="margin-left:0">
+        <span>A</span>
+        <button class="btn icon" id="fontDecBtn" title="Smaller text">−</button>
+        <button class="btn icon" id="fontIncBtn" title="Larger text">+</button>
+      </div>
+      <div class="sep"></div>
+      <div class="speed-row" style="margin-left:0">
         <span>Scroll</span>
         <input type="range" id="speedSlider" min="10" max="120" value="36" />
         <span id="speedLabel">36 px/s</span>
@@ -3035,6 +3041,8 @@ const el = {
   editedBadge: document.getElementById('editedBadge'),
   variantBar: document.getElementById('variantBar'),
   variantTabs: document.getElementById('variantTabs'),
+  fontDecBtn: document.getElementById('fontDecBtn'),
+  fontIncBtn: document.getElementById('fontIncBtn'),
 };
 
 // ----- Edited chord chart persistence (localStorage) -----------
@@ -3051,6 +3059,38 @@ const SOURCE_VERSION = '20260614';
     localStorage.setItem(vkey, SOURCE_VERSION);
   }
 })();
+
+// ----- Font size adjustment (persisted per device, not per song) -----------
+const FONT_SIZE_KEY = 'chartFontOffset';
+const FONT_SIZE_MIN = -4;
+const FONT_SIZE_MAX = 8;
+let fontSizeOffset = parseInt(localStorage.getItem(FONT_SIZE_KEY) || '0', 10);
+
+function applyFontSize() {
+  // Base clamp is clamp(15px, 1.4vw+10px, 22px); offset shifts the min/max.
+  const min = 15 + fontSizeOffset;
+  const max = 22 + fontSizeOffset;
+  el.chart.style.fontSize = `clamp(${min}px, 1.4vw + ${10 + fontSizeOffset}px, ${max}px)`;
+  el.fontDecBtn.disabled = fontSizeOffset <= FONT_SIZE_MIN;
+  el.fontIncBtn.disabled = fontSizeOffset >= FONT_SIZE_MAX;
+}
+
+el.fontDecBtn.addEventListener('click', () => {
+  if (fontSizeOffset > FONT_SIZE_MIN) {
+    fontSizeOffset--;
+    localStorage.setItem(FONT_SIZE_KEY, fontSizeOffset);
+    applyFontSize();
+  }
+});
+el.fontIncBtn.addEventListener('click', () => {
+  if (fontSizeOffset < FONT_SIZE_MAX) {
+    fontSizeOffset++;
+    localStorage.setItem(FONT_SIZE_KEY, fontSizeOffset);
+    applyFontSize();
+  }
+});
+
+applyFontSize();
 
 // Edits are stored per-song under a stable storage key. The original
 // song.chordPro is the fallback when no edit exists.
@@ -3756,7 +3796,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260614b';
+const SW_BUILD = '20260614c';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
