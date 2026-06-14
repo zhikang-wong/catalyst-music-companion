@@ -254,7 +254,7 @@
     background: var(--panel);
     border-bottom: 1px solid var(--border);
   }
-  .topbar-main {
+  .topbar-header {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -264,14 +264,41 @@
   .topbar-controls {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
     flex-wrap: wrap;
   }
+  .topbar-controls.collapsed { display: none; }
   .topbar-controls .sep { width: 1px; height: 22px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
+  /* Visually-grouped clusters of related controls */
+  .ctrl-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--chip-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 5px 8px;
+  }
+  #controlsToggle { margin-left: auto; flex-shrink: 0; }
+
+  /* Section-jump dropdown */
+  .sections-dd { position: relative; flex-shrink: 0; }
+  .sections-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 150;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.14);
+    padding: 10px;
+    min-width: 220px;
+    max-width: 360px;
+  }
   .song-meta { display: flex; align-items: baseline; gap: 6px; min-width: 0; flex: 1; overflow: hidden; }
   .song-title { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .song-artist { color: var(--muted); font-size: 12px; white-space: nowrap; }
-  .song-pos { display: none; }
   .draft-badge {
     background: var(--draft);
     color: #ffffff;
@@ -696,51 +723,59 @@
     <div class="set-tabs" id="setTabs"></div>
   </div>
 
-  <!-- Song top bar — two rows -->
+  <!-- Song top bar -->
   <div class="topbar">
-    <!-- Row 1: song info + meta + controls -->
-    <div class="topbar-main">
+    <!-- Persistent header: always visible -->
+    <div class="topbar-header">
       <div class="song-meta">
         <div class="song-title" id="songTitle">—</div>
         <div class="song-artist" id="songArtist"></div>
-        <div class="song-pos" id="songPos"></div>
         <span class="draft-badge" id="draftBadge" hidden>DRAFT</span>
         <span class="edited-badge" id="editedBadge" hidden>EDITED</span>
       </div>
       <div class="meta-chip">Key<strong id="songKey">—</strong></div>
       <div class="meta-chip">BPM<strong id="songBpm">—</strong></div>
       <div class="meta-chip">Time<strong id="songTime">4/4</strong></div>
-      <div class="transpose">
-        <span class="meta-chip">±<strong id="transOffset">0</strong></span>
-        <button class="btn icon" id="transDown">−</button>
-        <button class="btn icon" id="transUp">+</button>
+      <!-- Section jump dropdown -->
+      <div class="sections-dd">
+        <button class="btn" id="sectionsToggle" title="Jump to section">⌖ Sections ▾</button>
+        <div class="sections-panel" id="sectionsPanel" hidden>
+          <div class="section-btns" id="sectionBtns"></div>
+        </div>
       </div>
-      <div class="song-switcher">
+      <button class="btn icon" id="prevSong" title="Previous song">‹</button>
+      <button class="btn icon" id="nextSong" title="Next song">›</button>
+      <button class="btn" id="controlsToggle" title="Show / hide controls">⚙ ▾</button>
+    </div>
+
+    <!-- Collapsible controls -->
+    <div class="topbar-controls" id="topbarControls">
+      <!-- Playback group -->
+      <div class="ctrl-group">
+        <button class="btn primary" id="playBtn">▶ Play</button>
+        <button class="btn icon" id="restartBtn" title="Restart">⟲</button>
+        <div class="speed-row">
+          <span>Scroll</span>
+          <input type="range" id="speedSlider" min="10" max="200" value="36" />
+          <span id="speedLabel">–:––</span>
+          <button class="btn icon" id="autoFitBtn" title="Auto-fit to song duration">↺ Auto</button>
+        </div>
+      </div>
+      <!-- Chart group -->
+      <div class="ctrl-group">
         <button class="btn icon" id="editBtn" title="Edit chord chart">✏️</button>
         <button class="btn icon" id="resetEditBtn" hidden title="Reset edits">↺</button>
         <button class="btn icon" id="exportEditsBtn" title="Export edits">⬆</button>
-        <button class="btn icon" id="prevSong" title="Previous song">‹</button>
-        <button class="btn icon" id="nextSong" title="Next song">›</button>
-      </div>
-    </div>
-    <!-- Row 2: play + section pills + scroll speed -->
-    <div class="topbar-controls">
-      <button class="btn" id="playBtn">▶ Play</button>
-      <button class="btn icon" id="restartBtn" title="Restart">⟲</button>
-      <div class="sep"></div>
-      <div class="section-btns" id="sectionBtns"></div>
-      <div class="sep" style="margin-left:auto"></div>
-      <div class="speed-row" style="margin-left:0">
-        <span>A</span>
-        <button class="btn icon" id="fontDecBtn" title="Smaller text">−</button>
-        <button class="btn icon" id="fontIncBtn" title="Larger text">+</button>
-      </div>
-      <div class="sep"></div>
-      <div class="speed-row" style="margin-left:0">
-        <span>Scroll</span>
-        <input type="range" id="speedSlider" min="10" max="200" value="36" />
-        <span id="speedLabel">–:––</span>
-        <button class="btn icon" id="autoFitBtn" title="Auto-fit to song duration">↺ Auto</button>
+        <div class="speed-row">
+          <span>A</span>
+          <button class="btn icon" id="fontDecBtn" title="Smaller text">−</button>
+          <button class="btn icon" id="fontIncBtn" title="Larger text">+</button>
+        </div>
+        <div class="transpose">
+          <span class="meta-chip">±<strong id="transOffset">0</strong></span>
+          <button class="btn icon" id="transDown">−</button>
+          <button class="btn icon" id="transUp">+</button>
+        </div>
       </div>
     </div>
   </div>
@@ -3012,7 +3047,6 @@ const el = {
   songPickerMenu: null,
   title: document.getElementById('songTitle'),
   artist: document.getElementById('songArtist'),
-  pos: document.getElementById('songPos'),
   draftBadge: document.getElementById('draftBadge'),
   key: document.getElementById('songKey'),
   bpm: document.getElementById('songBpm'),
@@ -3029,6 +3063,10 @@ const el = {
   speed: document.getElementById('speedSlider'),
   speedLabel: document.getElementById('speedLabel'),
   autoFitBtn: document.getElementById('autoFitBtn'),
+  sectionsToggle: document.getElementById('sectionsToggle'),
+  sectionsPanel: document.getElementById('sectionsPanel'),
+  controlsToggle: document.getElementById('controlsToggle'),
+  topbarControls: document.getElementById('topbarControls'),
   progressFill: document.getElementById('progressFill'),
   elapsedTime: document.getElementById('elapsedTime'),
   remainingTime: document.getElementById('remainingTime'),
@@ -3267,10 +3305,35 @@ function renderSectionButtons() {
         el.chart.scrollTop = target;
         state.virtualScroll = target;
       }
+      closeSectionsPanel();
     });
     container.appendChild(btn);
   });
 }
+
+// ----- Sections dropdown + controls collapse -----------------------------
+function openSectionsPanel() { el.sectionsPanel.hidden = false; el.sectionsToggle.classList.add('active'); }
+function closeSectionsPanel() { el.sectionsPanel.hidden = true; el.sectionsToggle.classList.remove('active'); }
+el.sectionsToggle.addEventListener('click', (e) => {
+  e.stopPropagation();
+  el.sectionsPanel.hidden ? openSectionsPanel() : closeSectionsPanel();
+});
+document.addEventListener('click', (e) => {
+  if (!el.sectionsPanel.hidden && !e.target.closest('.sections-dd')) closeSectionsPanel();
+});
+
+const CONTROLS_KEY = 'controlsCollapsed';
+function applyControlsCollapsed() {
+  const collapsed = localStorage.getItem(CONTROLS_KEY) === '1';
+  el.topbarControls.classList.toggle('collapsed', collapsed);
+  el.controlsToggle.textContent = collapsed ? '⚙ ▸' : '⚙ ▾';
+}
+el.controlsToggle.addEventListener('click', () => {
+  const collapsed = !el.topbarControls.classList.contains('collapsed');
+  localStorage.setItem(CONTROLS_KEY, collapsed ? '1' : '0');
+  applyControlsCollapsed();
+});
+applyControlsCollapsed();
 
 function loadSong(setIdx, songIdx) {
   // If we're navigating away while editing, commit and exit edit mode first
@@ -3328,7 +3391,6 @@ function renderTopbar() {
   const s = currentSong();
   el.title.textContent = s.title;
   el.artist.textContent = s.artist ? ' — ' + s.artist : '';
-  el.pos.textContent = '(' + (state.songIndex + 1) + ' of ' + currentSet().songs.length + ' · ' + currentSet().name + ')';
   el.draftBadge.hidden = !s.draft;
   el.editedBadge.hidden = !hasEdits(s);
   el.resetEditBtn.hidden = !hasEdits(s);
@@ -3819,7 +3881,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260614e';
+const SW_BUILD = '20260614f';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
