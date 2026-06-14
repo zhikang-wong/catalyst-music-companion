@@ -2903,6 +2903,7 @@ function parseChordPro(src) {
     if (dir) {
       const name = dir[1].toLowerCase();
       const arg = dir[2] ? dir[2].trim() : null;
+      if (name.startsWith('end_of_')) { continue; } // silently ignore closing tags
       if (name === 'start_of_verse')   out.push({ type: 'section', section: 'verse',  label: arg || 'Verse' });
       else if (name === 'start_of_chorus') out.push({ type: 'section', section: 'chorus', label: arg || 'Chorus' });
       else if (name === 'start_of_bridge') out.push({ type: 'section', section: 'bridge', label: arg || 'Bridge' });
@@ -3740,9 +3741,11 @@ document.addEventListener('keydown', e => {
 loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
+// Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
+const SW_BUILD = '20260614b';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch((err) => {
+    navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
       console.warn('SW registration failed:', err);
     });
   });
