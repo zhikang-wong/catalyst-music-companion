@@ -738,8 +738,9 @@
       <div class="sep"></div>
       <div class="speed-row" style="margin-left:0">
         <span>Scroll</span>
-        <input type="range" id="speedSlider" min="10" max="120" value="36" />
-        <span id="speedLabel">36 px/s</span>
+        <input type="range" id="speedSlider" min="10" max="200" value="36" />
+        <span id="speedLabel">–:––</span>
+        <button class="btn icon" id="autoFitBtn" title="Auto-fit to song duration">↺ Auto</button>
       </div>
     </div>
   </div>
@@ -3027,6 +3028,7 @@ const el = {
   restartBtn: document.getElementById('restartBtn'),
   speed: document.getElementById('speedSlider'),
   speedLabel: document.getElementById('speedLabel'),
+  autoFitBtn: document.getElementById('autoFitBtn'),
   progressFill: document.getElementById('progressFill'),
   elapsedTime: document.getElementById('elapsedTime'),
   remainingTime: document.getElementById('remainingTime'),
@@ -3316,7 +3318,7 @@ function loadSong(setIdx, songIdx) {
         const derived = scrollable / song.durationSec;
         state.scrollSpeed = derived;
         el.speed.value = Math.round(derived);
-        el.speedLabel.textContent = Math.round(derived) + ' px/s';
+        el.speedLabel.textContent = fmtETA(derived);
       }
     });
   }
@@ -3413,7 +3415,7 @@ function exitEditMode(opts) {
           const derived = scrollable / song.durationSec;
           state.scrollSpeed = derived;
           el.speed.value = Math.round(derived);
-          el.speedLabel.textContent = Math.round(derived) + ' px/s';
+          el.speedLabel.textContent = fmtETA(derived);
         }
       });
     }
@@ -3701,9 +3703,30 @@ el.transDown.addEventListener('click', () => {
   updateKey(); renderChart();
 });
 
+function fmtETA(pxPerSec) {
+  const scrollable = el.chart.scrollHeight - el.chart.clientHeight;
+  if (!scrollable || !pxPerSec) return '–:––';
+  const secs = Math.round(scrollable / pxPerSec);
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return m + ':' + String(s).padStart(2, '0');
+}
+
+function autoFit() {
+  const song = currentSong();
+  const scrollable = el.chart.scrollHeight - el.chart.clientHeight;
+  if (!scrollable || !song.durationSec) return;
+  const derived = scrollable / song.durationSec;
+  state.scrollSpeed = derived;
+  el.speed.value = Math.min(200, Math.max(10, Math.round(derived)));
+  el.speedLabel.textContent = fmtETA(derived);
+}
+
+el.autoFitBtn.addEventListener('click', autoFit);
+
 el.speed.addEventListener('input', () => {
   state.scrollSpeed = +el.speed.value;
-  el.speedLabel.textContent = state.scrollSpeed + ' px/s';
+  el.speedLabel.textContent = fmtETA(state.scrollSpeed);
 });
 
 // Prev / Next — navigate within the current set, with end-of-set handoff
@@ -3796,7 +3819,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260614d';
+const SW_BUILD = '20260614e';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
