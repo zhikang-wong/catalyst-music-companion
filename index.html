@@ -407,7 +407,8 @@
     overflow-y: auto;
     padding: 12vh 28px 60vh;
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    font-size: 18px;
+    /* Responsive: 15px on narrow phones → ~22px on wide desktops */
+    font-size: clamp(15px, 1.4vw + 10px, 22px);
     line-height: 1.5;
   }
   .chart::-webkit-scrollbar { width: 6px; }
@@ -423,7 +424,7 @@
     background: #fffaf0;
     padding: 24px 28px;
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    font-size: 16px;
+    font-size: clamp(14px, 1.2vw + 9px, 20px);
     line-height: 1.5;
     color: var(--fg);
     tab-size: 4;
@@ -470,7 +471,7 @@
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.18em;
-    font-size: 17px;
+    font-size: clamp(14px, 1.1vw + 10px, 20px);
     margin-top: 32px;
     margin-bottom: 6px;
     padding: 10px 12px 10px 14px;
@@ -482,7 +483,7 @@
   .line.comment {
     color: var(--muted);
     font-style: italic;
-    font-size: 14px;
+    font-size: clamp(12px, 0.9vw + 9px, 17px);
     font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     margin-top: 8px;
   }
@@ -789,105 +790,6 @@ const GIG = {
       {
         name: "Set 1",
         songs: [
-        {
-          title: "The Emptiness Machine", artist: "Linkin Park",
-          key: "D", bpm: 184, time: "4/4", durationSec: 190,
-          chordPro: `
-Intro
-D
-
-Verse 1
-D                                  Gm
- Your blades are sharpened with precision
-D                                  C
- Flashing your favorite point of view
-D                              Gm
- I know you're waiting in the distance
-D                 C
- Just like you always do, just like you always do
-
-Pre-Chorus
-Bb
-  Already pulling me in
-F
- Already under my skin
-C
- And I know exactly how this ends, I
-
-Chorus
-                  D                       Gm
-Let you cut me open just to watch me bleed
-               Bb            F               C
-Gave up who I am  for who you wanted me to be
-                        D                   Gm
-Don't know why I'm hopin' for what I won't receive
-                Bb             F         C
-Fallin' for the promise of the emptiness machine
-
-Pre-Verse
-D Gm Bb F C
-
-Verse 2
-D                        Gm
- Goin' around like a revolver
-D                            C
- It's been decided how we lose
-D                               Gm
- 'Cause there's a fire under the altar
-D                    C
- I keep on lyin' to, I keep on lyin' to
-
-Pre-Chorus
-Bb
-  Already pulling me in
-F
- Already under my skin
-C
- And I know exactly how this ends, I
-
-Chorus
-                  D                       Gm
-Let you cut me open just to watch me bleed
-               Bb            F               C
-Gave up who I am  for who you wanted me to be
-                        D                   Gm
-Don't know why I'm hopin' for what I won't receive
-                Bb             F         C
-Fallin' for the promise of the emptiness machine
-
-Bridge
-D                    Gm
- I only wanted to be part of something
-Bb      F            C
- I only wanted to be part of, part of
-D                    Gm
- I only wanted to be part of something
-Bb      F            C
- I only wanted to be part of, part of
-D                    Gm
- I only wanted to be part of something
-Bb      F            C
- I only wanted to be part
-
-Last Chorus
-                 D                     Gm
-I let you cut me open just to watch me bleed
-              Bb              F            C
-Gave up who I am  for who you wanted me to be
-                   D                      Gm
-Don't know why I'm hopin', so fuckin' naive
-                Bb             F         C
-Fallin' for the promise of the emptiness machine
-The emptiness machine
-
-Outro
-D Gm
-                Bb F  C
-The emptiness machine,    oh
-                    D
-The emptiness machine
-`.trim()
-        },
         {
           title: "Mr Brightside", artist: "The Killers",
           key: "C#", bpm: 148, time: "4/4", durationSec: 227,
@@ -3831,6 +3733,15 @@ document.addEventListener('keydown', e => {
 
 // Init
 loadSong(0, 0);
+
+// Offline support — register service worker (no-op on file:// or unsupported browsers)
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch((err) => {
+      console.warn('SW registration failed:', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
