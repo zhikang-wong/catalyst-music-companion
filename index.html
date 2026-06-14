@@ -2859,7 +2859,7 @@ function preprocessChordChart(src) {
     // Section header
     const sec = detectSection(raw);
     if (sec) {
-      const tagMap = { verse: 'verse', chorus: 'chorus', bridge: 'bridge' };
+      const tagMap = { verse: 'verse', chorus: 'chorus', bridge: 'bridge', prechorus: 'chorus', interlude: 'bridge' };
       if (tagMap[sec.section]) out.push('{start_of_' + tagMap[sec.section] + ': ' + sec.label + '}');
       else out.push('{comment: ' + sec.label + '}');
       i++;
