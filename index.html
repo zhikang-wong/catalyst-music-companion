@@ -18,6 +18,7 @@
     --chip-bg: #f3f4f6;
     --beat-idle: #d1d5db;
     --draft: #dc2626;
+    --ctl-h: 40px;   /* shared height for header controls, chips, playback group */
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
@@ -267,26 +268,32 @@
     justify-content: space-between;
     gap: 10px;
   }
-  /* Bottom row: nav + meta + playback all inline; wrap only if they can't fit. */
+  /* Bottom row: nav + meta + playback + settings, centred; wrap if they can't fit. */
   .header-bottom {
     display: flex;
     align-items: center;
+    justify-content: center;   /* centre the row (and any wrapped lines) */
     gap: 10px 16px;
     flex-wrap: wrap;
   }
   .song-nav { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  .nav-btn {
-    font-size: 13px;
-    font-weight: 600;
-    padding: 6px 14px;
-  }
+  .nav-btn { font-size: 13px; font-weight: 600; }
   .header-center {
     display: flex;
-    align-items: stretch;   /* chips match the playback group's height */
+    align-items: center;
     gap: 10px;
     flex-wrap: wrap;
   }
   .settings-dd { flex-shrink: 0; position: relative; }
+
+  /* Uniform control height across nav, sections, settings, chips, playback group */
+  .nav-btn,
+  #sectionsToggle,
+  #controlsToggle,
+  .header-center .meta-chip,
+  .playback-group {
+    height: var(--ctl-h);
+  }
   /* Visually-grouped clusters of related controls */
   .ctrl-group {
     display: flex;
@@ -382,6 +389,9 @@
     cursor: pointer;
     font-family: inherit;
     transition: background 0.12s, border-color 0.12s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   .btn:hover { background: var(--chip-bg); border-color: #d1d5db; }
   .btn:active { transform: translateY(1px); }
@@ -390,6 +400,13 @@
   .btn.icon { padding: 5px 10px; font-size: 15px; min-width: 34px; }
 
   .transpose { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  /* Fixed-width offset readout so the overlay doesn't resize as the value changes */
+  .transpose .meta-chip {
+    display: inline-block;
+    min-width: 3.2em;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
   .song-switcher { display: flex; gap: 4px; flex-shrink: 0; }
 
   /* Metronome bar — own row above the progress strip */
@@ -779,7 +796,7 @@
   <div class="topbar">
     <!-- Persistent header: always visible -->
     <div class="topbar-header">
-      <!-- Top line: song title (left) + Settings (right) -->
+      <!-- Top line: song title -->
       <div class="header-top">
         <div class="song-meta">
           <div class="song-title" id="songTitle">—</div>
@@ -787,35 +804,9 @@
           <span class="draft-badge" id="draftBadge" hidden>DRAFT</span>
           <span class="edited-badge" id="editedBadge" hidden>EDITED</span>
         </div>
-        <!-- Settings dropdown: chart tools as an overlay -->
-        <div class="settings-dd">
-          <button class="btn" id="controlsToggle" title="Chart tools">Settings ▾</button>
-          <div class="settings-panel" id="settingsPanel" hidden>
-            <!-- Line 1: edit / reset / export -->
-            <div class="settings-row">
-              <button class="btn" id="editBtn" title="Edit chord chart">✏️ Edit</button>
-              <button class="btn" id="resetEditBtn" hidden title="Reset edits">↺ Reset</button>
-              <button class="btn" id="exportEditsBtn" title="Export edits">⬆ Export</button>
-            </div>
-            <!-- Line 2: font size / transpose -->
-            <div class="settings-row">
-              <div class="speed-row">
-                <span>Font size</span>
-                <button class="btn icon" id="fontDecBtn" title="Smaller text">−</button>
-                <button class="btn icon" id="fontIncBtn" title="Larger text">+</button>
-              </div>
-              <div class="transpose">
-                <span>Transpose</span>
-                <span class="meta-chip">±<strong id="transOffset">0</strong></span>
-                <button class="btn icon" id="transDown">−</button>
-                <button class="btn icon" id="transUp">+</button>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
-      <!-- Bottom line: nav + meta + playback (wraps only if it can't fit) -->
+      <!-- Controls line: nav + meta + playback + settings (centred, wraps if needed) -->
       <div class="header-bottom">
         <div class="song-nav">
           <button class="btn nav-btn" id="prevSong" title="Previous song">‹ Previous</button>
@@ -840,6 +831,32 @@
               <input type="range" id="speedSlider" min="10" max="200" value="36" />
               <span id="speedLabel">–:––</span>
               <button class="btn icon" id="autoFitBtn" title="Auto-fit to song duration">↺ Auto</button>
+            </div>
+          </div>
+        </div>
+        <!-- Settings dropdown: chart tools as an overlay -->
+        <div class="settings-dd">
+          <button class="btn" id="controlsToggle" title="Chart tools">Settings ▾</button>
+          <div class="settings-panel" id="settingsPanel" hidden>
+            <!-- Line 1: edit / reset / export -->
+            <div class="settings-row">
+              <button class="btn" id="editBtn" title="Edit chord chart">✏️ Edit</button>
+              <button class="btn" id="resetEditBtn" hidden title="Reset edits">↺ Reset</button>
+              <button class="btn" id="exportEditsBtn" title="Export edits">⬆ Export</button>
+            </div>
+            <!-- Line 2: font size / transpose -->
+            <div class="settings-row">
+              <div class="speed-row">
+                <span>Font size</span>
+                <button class="btn icon" id="fontDecBtn" title="Smaller text">−</button>
+                <button class="btn icon" id="fontIncBtn" title="Larger text">+</button>
+              </div>
+              <div class="transpose">
+                <span>Transpose</span>
+                <span class="meta-chip">±<strong id="transOffset">0</strong></span>
+                <button class="btn icon" id="transDown">−</button>
+                <button class="btn icon" id="transUp">+</button>
+              </div>
             </div>
           </div>
         </div>
@@ -3947,7 +3964,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260614m';
+const SW_BUILD = '20260614n';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
