@@ -287,7 +287,7 @@
     flex-wrap: wrap;
     justify-content: center;
   }
-  #controlsToggle { grid-column: 3; justify-self: end; flex-shrink: 0; }
+  .settings-dd { grid-column: 3; justify-self: end; flex-shrink: 0; position: relative; }
 
   /* When the row is too narrow for all three columns side-by-side
      (e.g. iPad with the 280px sidebar showing), drop the centre cluster
@@ -297,19 +297,9 @@
       grid-template-columns: minmax(0, 1fr) auto;
     }
     .song-block      { grid-column: 1; grid-row: 1; }
-    #controlsToggle  { grid-column: 2; grid-row: 1; }
+    .settings-dd     { grid-column: 2; grid-row: 1; }
     .header-center   { grid-column: 1 / -1; grid-row: 2; justify-self: stretch; }
   }
-
-  .topbar-controls {
-    display: flex;
-    justify-content: flex-end;   /* chart tools pinned to the right */
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .topbar-controls.collapsed { display: none; }
-  .topbar-controls .sep { width: 1px; height: 22px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
   /* Visually-grouped clusters of related controls */
   .ctrl-group {
     display: flex;
@@ -336,6 +326,28 @@
     min-width: 220px;
     max-width: 360px;
   }
+
+  /* Settings dropdown (chart tools) — right-aligned overlay */
+  .settings-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 150;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.14);
+    padding: 10px;
+  }
+  .settings-panel .ctrl-group {
+    background: transparent;
+    border: none;
+    padding: 0;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
   .song-meta { display: flex; align-items: baseline; gap: 6px; min-width: 0; overflow: hidden; }
   .song-title { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .song-artist { color: var(--muted); font-size: 12px; white-space: nowrap; }
@@ -778,12 +790,12 @@
         <div class="song-nav">
           <button class="btn nav-btn" id="prevSong" title="Previous song">‹ Previous</button>
           <button class="btn nav-btn" id="nextSong" title="Next song">Next ›</button>
-        </div>
-        <!-- Section jump dropdown (under prev/next) -->
-        <div class="sections-dd">
-          <button class="btn" id="sectionsToggle" title="Jump to section">⌖ Sections ▾</button>
-          <div class="sections-panel" id="sectionsPanel" hidden>
-            <div class="section-btns" id="sectionBtns"></div>
+          <!-- Section jump dropdown (beside prev/next) -->
+          <div class="sections-dd">
+            <button class="btn" id="sectionsToggle" title="Jump to section">⌖ Sections ▾</button>
+            <div class="sections-panel" id="sectionsPanel" hidden>
+              <div class="section-btns" id="sectionBtns"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -805,24 +817,25 @@
         </div>
       </div>
 
-      <button class="btn" id="controlsToggle" title="Show / hide chart tools">⚙ ▾</button>
-    </div>
-
-    <!-- Collapsible controls: chart tools, right-aligned -->
-    <div class="topbar-controls" id="topbarControls">
-      <div class="ctrl-group chart-group">
-        <button class="btn icon" id="editBtn" title="Edit chord chart">✏️</button>
-        <button class="btn icon" id="resetEditBtn" hidden title="Reset edits">↺</button>
-        <button class="btn icon" id="exportEditsBtn" title="Export edits">⬆</button>
-        <div class="speed-row">
-          <span>A</span>
-          <button class="btn icon" id="fontDecBtn" title="Smaller text">−</button>
-          <button class="btn icon" id="fontIncBtn" title="Larger text">+</button>
-        </div>
-        <div class="transpose">
-          <span class="meta-chip">±<strong id="transOffset">0</strong></span>
-          <button class="btn icon" id="transDown">−</button>
-          <button class="btn icon" id="transUp">+</button>
+      <!-- Settings dropdown: chart tools as an overlay -->
+      <div class="settings-dd">
+        <button class="btn" id="controlsToggle" title="Chart tools">Settings ▾</button>
+        <div class="settings-panel" id="settingsPanel" hidden>
+          <div class="ctrl-group chart-group">
+            <button class="btn" id="editBtn" title="Edit chord chart">Edit</button>
+            <button class="btn" id="resetEditBtn" hidden title="Reset edits">Reset</button>
+            <button class="btn" id="exportEditsBtn" title="Export edits">Export</button>
+            <div class="speed-row">
+              <span>A</span>
+              <button class="btn icon" id="fontDecBtn" title="Smaller text">−</button>
+              <button class="btn icon" id="fontIncBtn" title="Larger text">+</button>
+            </div>
+            <div class="transpose">
+              <span class="meta-chip">±<strong id="transOffset">0</strong></span>
+              <button class="btn icon" id="transDown">−</button>
+              <button class="btn icon" id="transUp">+</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -3114,7 +3127,7 @@ const el = {
   sectionsToggle: document.getElementById('sectionsToggle'),
   sectionsPanel: document.getElementById('sectionsPanel'),
   controlsToggle: document.getElementById('controlsToggle'),
-  topbarControls: document.getElementById('topbarControls'),
+  settingsPanel: document.getElementById('settingsPanel'),
   progressFill: document.getElementById('progressFill'),
   elapsedTime: document.getElementById('elapsedTime'),
   remainingTime: document.getElementById('remainingTime'),
@@ -3370,18 +3383,16 @@ document.addEventListener('click', (e) => {
   if (!el.sectionsPanel.hidden && !e.target.closest('.sections-dd')) closeSectionsPanel();
 });
 
-const CONTROLS_KEY = 'controlsCollapsed';
-function applyControlsCollapsed() {
-  const collapsed = localStorage.getItem(CONTROLS_KEY) === '1';
-  el.topbarControls.classList.toggle('collapsed', collapsed);
-  el.controlsToggle.textContent = collapsed ? '⚙ ▸' : '⚙ ▾';
-}
-el.controlsToggle.addEventListener('click', () => {
-  const collapsed = !el.topbarControls.classList.contains('collapsed');
-  localStorage.setItem(CONTROLS_KEY, collapsed ? '1' : '0');
-  applyControlsCollapsed();
+// Settings dropdown (chart tools) — overlay, same pattern as Sections
+function openSettingsPanel() { el.settingsPanel.hidden = false; el.controlsToggle.classList.add('active'); el.controlsToggle.textContent = 'Settings ▴'; }
+function closeSettingsPanel() { el.settingsPanel.hidden = true; el.controlsToggle.classList.remove('active'); el.controlsToggle.textContent = 'Settings ▾'; }
+el.controlsToggle.addEventListener('click', (e) => {
+  e.stopPropagation();
+  el.settingsPanel.hidden ? openSettingsPanel() : closeSettingsPanel();
 });
-applyControlsCollapsed();
+document.addEventListener('click', (e) => {
+  if (!el.settingsPanel.hidden && !e.target.closest('.settings-dd')) closeSettingsPanel();
+});
 
 function loadSong(setIdx, songIdx) {
   // If we're navigating away while editing, commit and exit edit mode first
@@ -3453,6 +3464,7 @@ function enterEditMode() {
   if (state.editMode) return;
   const song = currentSong();
   togglePlay(false);
+  closeSettingsPanel();
   state.editMode = true;
   el.editBtn.textContent = '✓ Done';
   el.editBtn.classList.add('editing');
@@ -3502,7 +3514,7 @@ function exitEditMode(opts) {
   if (ta) saveEditedChordPro(song, ta.value);
 
   state.editMode = false;
-  el.editBtn.textContent = '✏️ Edit';
+  el.editBtn.textContent = 'Edit';
   el.editBtn.classList.remove('editing');
   const hint = document.getElementById('editHint');
   if (hint) hint.remove();
@@ -3929,7 +3941,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260614j';
+const SW_BUILD = '20260614k';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
