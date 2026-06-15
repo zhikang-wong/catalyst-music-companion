@@ -327,7 +327,7 @@
     max-width: 360px;
   }
 
-  /* Settings dropdown (chart tools) — right-aligned overlay */
+  /* Settings dropdown (chart tools) — right-aligned overlay, two rows */
   .settings-panel {
     position: absolute;
     top: calc(100% + 6px);
@@ -337,16 +337,18 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.14);
-    padding: 10px;
-  }
-  .settings-panel .ctrl-group {
-    background: transparent;
-    border: none;
-    padding: 0;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
     gap: 10px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
   }
+  .settings-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .transpose > span:first-child { color: var(--muted); font-size: 11px; }
 
   .song-meta { display: flex; align-items: baseline; gap: 6px; min-width: 0; overflow: hidden; }
   .song-title { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -371,6 +373,8 @@
     flex-shrink: 0;
   }
   .meta-chip strong { color: var(--fg); margin-left: 3px; }
+  /* Key / BPM / Time enlarged to match the playback group text */
+  .header-center .meta-chip { font-size: 13px; padding: 5px 10px; }
 
   .btn {
     background: #ffffff;
@@ -821,16 +825,21 @@
       <div class="settings-dd">
         <button class="btn" id="controlsToggle" title="Chart tools">Settings ▾</button>
         <div class="settings-panel" id="settingsPanel" hidden>
-          <div class="ctrl-group chart-group">
-            <button class="btn" id="editBtn" title="Edit chord chart">Edit</button>
-            <button class="btn" id="resetEditBtn" hidden title="Reset edits">Reset</button>
-            <button class="btn" id="exportEditsBtn" title="Export edits">Export</button>
+          <!-- Line 1: edit / reset / export -->
+          <div class="settings-row">
+            <button class="btn" id="editBtn" title="Edit chord chart">✏️ Edit</button>
+            <button class="btn" id="resetEditBtn" hidden title="Reset edits">↺ Reset</button>
+            <button class="btn" id="exportEditsBtn" title="Export edits">⬆ Export</button>
+          </div>
+          <!-- Line 2: font size / transpose -->
+          <div class="settings-row">
             <div class="speed-row">
-              <span>A</span>
+              <span>Font size</span>
               <button class="btn icon" id="fontDecBtn" title="Smaller text">−</button>
               <button class="btn icon" id="fontIncBtn" title="Larger text">+</button>
             </div>
             <div class="transpose">
+              <span>Transpose</span>
               <span class="meta-chip">±<strong id="transOffset">0</strong></span>
               <button class="btn icon" id="transDown">−</button>
               <button class="btn icon" id="transUp">+</button>
@@ -3941,7 +3950,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260614k';
+const SW_BUILD = '20260614l';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
