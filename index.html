@@ -289,6 +289,18 @@
   }
   #controlsToggle { grid-column: 3; justify-self: end; flex-shrink: 0; }
 
+  /* When the row is too narrow for all three columns side-by-side
+     (e.g. iPad with the 280px sidebar showing), drop the centre cluster
+     onto its own full-width row so nothing overflows or squishes. */
+  @media (max-width: 1400px) {
+    .topbar-header {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+    .song-block      { grid-column: 1; grid-row: 1; }
+    #controlsToggle  { grid-column: 2; grid-row: 1; }
+    .header-center   { grid-column: 1 / -1; grid-row: 2; justify-self: stretch; }
+  }
+
   .topbar-controls {
     display: flex;
     justify-content: flex-end;   /* chart tools pinned to the right */
@@ -655,7 +667,7 @@
     color: var(--muted); font-size: 11px;
     flex-shrink: 0;
   }
-  .speed-row input[type=range] { width: 100px; max-width: 140px; accent-color: var(--accent); }
+  .speed-row input[type=range] { width: clamp(80px, 12vw, 150px); accent-color: var(--accent); }
   .help { color: var(--muted); font-size: 11px; text-align: right; }
   .help kbd {
     background: var(--chip-bg); border: 1px solid var(--border);
@@ -3917,7 +3929,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260614i';
+const SW_BUILD = '20260614j';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
