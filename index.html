@@ -254,52 +254,39 @@
     background: var(--panel);
     border-bottom: 1px solid var(--border);
   }
-  /* Header: left song block | centered meta+playback | right chart-tools toggle */
+  /* Header: stacked rows. Top = title + Settings; bottom = nav + meta + playback. */
   .topbar-header {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    align-items: center;
-    gap: 12px;
-    /* no overflow:hidden here — it would clip the Sections dropdown panel */
-  }
-  /* Left block: song title/artist, then prev/next, then sections */
-  .song-block {
-    grid-column: 1;
-    justify-self: start;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    min-width: 0;
+    gap: 8px;
+    /* no overflow:hidden here — it would clip the dropdown panels */
   }
-  .song-nav { display: flex; gap: 8px; }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  /* Bottom row: nav + meta + playback all inline; wrap only if they can't fit. */
+  .header-bottom {
+    display: flex;
+    align-items: center;
+    gap: 10px 16px;
+    flex-wrap: wrap;
+  }
+  .song-nav { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   .nav-btn {
     font-size: 13px;
     font-weight: 600;
     padding: 6px 14px;
   }
-  /* Center cluster: Key/BPM/Time + playback group on one line, centred */
   .header-center {
-    grid-column: 2;
-    justify-self: center;
     display: flex;
-    align-items: center;
+    align-items: stretch;   /* chips match the playback group's height */
     gap: 10px;
     flex-wrap: wrap;
-    justify-content: center;
   }
-  .settings-dd { grid-column: 3; justify-self: end; flex-shrink: 0; position: relative; }
-
-  /* When the row is too narrow for all three columns side-by-side
-     (e.g. iPad with the 280px sidebar showing), drop the centre cluster
-     onto its own full-width row so nothing overflows or squishes. */
-  @media (max-width: 1400px) {
-    .topbar-header {
-      grid-template-columns: minmax(0, 1fr) auto;
-    }
-    .song-block      { grid-column: 1; grid-row: 1; }
-    .settings-dd     { grid-column: 2; grid-row: 1; }
-    .header-center   { grid-column: 1 / -1; grid-row: 2; justify-self: stretch; }
-  }
+  .settings-dd { flex-shrink: 0; position: relative; }
   /* Visually-grouped clusters of related controls */
   .ctrl-group {
     display: flex;
@@ -342,6 +329,8 @@
     flex-direction: column;
     gap: 10px;
   }
+  /* Re-assert hiding — the display:flex above would otherwise override [hidden]. */
+  .settings-panel[hidden] { display: none; }
   .settings-row {
     display: flex;
     align-items: center;
@@ -373,8 +362,15 @@
     flex-shrink: 0;
   }
   .meta-chip strong { color: var(--fg); margin-left: 3px; }
-  /* Key / BPM / Time enlarged to match the playback group text */
-  .header-center .meta-chip { font-size: 13px; padding: 5px 10px; }
+  /* Key / BPM / Time — same box style + height as the playback group */
+  .header-center .meta-chip {
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0 12px;
+  }
 
   .btn {
     background: #ffffff;
@@ -783,14 +779,44 @@
   <div class="topbar">
     <!-- Persistent header: always visible -->
     <div class="topbar-header">
-      <!-- Left: song title, prev/next, sections -->
-      <div class="song-block">
+      <!-- Top line: song title (left) + Settings (right) -->
+      <div class="header-top">
         <div class="song-meta">
           <div class="song-title" id="songTitle">—</div>
           <div class="song-artist" id="songArtist"></div>
           <span class="draft-badge" id="draftBadge" hidden>DRAFT</span>
           <span class="edited-badge" id="editedBadge" hidden>EDITED</span>
         </div>
+        <!-- Settings dropdown: chart tools as an overlay -->
+        <div class="settings-dd">
+          <button class="btn" id="controlsToggle" title="Chart tools">Settings ▾</button>
+          <div class="settings-panel" id="settingsPanel" hidden>
+            <!-- Line 1: edit / reset / export -->
+            <div class="settings-row">
+              <button class="btn" id="editBtn" title="Edit chord chart">✏️ Edit</button>
+              <button class="btn" id="resetEditBtn" hidden title="Reset edits">↺ Reset</button>
+              <button class="btn" id="exportEditsBtn" title="Export edits">⬆ Export</button>
+            </div>
+            <!-- Line 2: font size / transpose -->
+            <div class="settings-row">
+              <div class="speed-row">
+                <span>Font size</span>
+                <button class="btn icon" id="fontDecBtn" title="Smaller text">−</button>
+                <button class="btn icon" id="fontIncBtn" title="Larger text">+</button>
+              </div>
+              <div class="transpose">
+                <span>Transpose</span>
+                <span class="meta-chip">±<strong id="transOffset">0</strong></span>
+                <button class="btn icon" id="transDown">−</button>
+                <button class="btn icon" id="transUp">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom line: nav + meta + playback (wraps only if it can't fit) -->
+      <div class="header-bottom">
         <div class="song-nav">
           <button class="btn nav-btn" id="prevSong" title="Previous song">‹ Previous</button>
           <button class="btn nav-btn" id="nextSong" title="Next song">Next ›</button>
@@ -802,47 +828,18 @@
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- Center: meta + playback, centred -->
-      <div class="header-center">
-        <div class="meta-chip">Key<strong id="songKey">—</strong></div>
-        <div class="meta-chip">BPM<strong id="songBpm">—</strong></div>
-        <div class="meta-chip">Time<strong id="songTime">4/4</strong></div>
-        <div class="ctrl-group playback-group">
-          <button class="btn icon" id="restartBtn" title="Restart">⟲</button>
-          <button class="btn primary" id="playBtn">▶ Play</button>
-          <div class="speed-row">
-            <span>Scroll</span>
-            <input type="range" id="speedSlider" min="10" max="200" value="36" />
-            <span id="speedLabel">–:––</span>
-            <button class="btn icon" id="autoFitBtn" title="Auto-fit to song duration">↺ Auto</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Settings dropdown: chart tools as an overlay -->
-      <div class="settings-dd">
-        <button class="btn" id="controlsToggle" title="Chart tools">Settings ▾</button>
-        <div class="settings-panel" id="settingsPanel" hidden>
-          <!-- Line 1: edit / reset / export -->
-          <div class="settings-row">
-            <button class="btn" id="editBtn" title="Edit chord chart">✏️ Edit</button>
-            <button class="btn" id="resetEditBtn" hidden title="Reset edits">↺ Reset</button>
-            <button class="btn" id="exportEditsBtn" title="Export edits">⬆ Export</button>
-          </div>
-          <!-- Line 2: font size / transpose -->
-          <div class="settings-row">
+        <div class="header-center">
+          <div class="meta-chip">Key<strong id="songKey">—</strong></div>
+          <div class="meta-chip">BPM<strong id="songBpm">—</strong></div>
+          <div class="meta-chip">Time<strong id="songTime">4/4</strong></div>
+          <div class="ctrl-group playback-group">
+            <button class="btn icon" id="restartBtn" title="Restart">⟲</button>
+            <button class="btn primary" id="playBtn">▶ Play</button>
             <div class="speed-row">
-              <span>Font size</span>
-              <button class="btn icon" id="fontDecBtn" title="Smaller text">−</button>
-              <button class="btn icon" id="fontIncBtn" title="Larger text">+</button>
-            </div>
-            <div class="transpose">
-              <span>Transpose</span>
-              <span class="meta-chip">±<strong id="transOffset">0</strong></span>
-              <button class="btn icon" id="transDown">−</button>
-              <button class="btn icon" id="transUp">+</button>
+              <span>Scroll</span>
+              <input type="range" id="speedSlider" min="10" max="200" value="36" />
+              <span id="speedLabel">–:––</span>
+              <button class="btn icon" id="autoFitBtn" title="Auto-fit to song duration">↺ Auto</button>
             </div>
           </div>
         </div>
@@ -3950,7 +3947,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260614l';
+const SW_BUILD = '20260614m';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
