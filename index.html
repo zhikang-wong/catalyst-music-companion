@@ -259,15 +259,26 @@
     align-items: center;
     gap: 8px;
     flex-wrap: nowrap;
-    overflow: hidden;
+    /* no overflow:hidden here — it would clip the Sections dropdown panel */
+  }
+  /* Left block: song title/artist stacked above the prev/next arrows */
+  .song-block { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+  .song-nav { display: flex; gap: 8px; }
+  .nav-arrow {
+    font-size: 22px;
+    line-height: 1;
+    padding: 2px 18px;
+    font-weight: 700;
   }
   .topbar-controls {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: 10px;
-    flex-wrap: wrap;
   }
   .topbar-controls.collapsed { display: none; }
+  .playback-group { grid-column: 2; }       /* centered on the page */
+  .chart-group { grid-column: 3; justify-self: end; }  /* pinned to the right */
   .topbar-controls .sep { width: 1px; height: 22px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
   /* Visually-grouped clusters of related controls */
   .ctrl-group {
@@ -296,7 +307,7 @@
     min-width: 220px;
     max-width: 360px;
   }
-  .song-meta { display: flex; align-items: baseline; gap: 6px; min-width: 0; flex: 1; overflow: hidden; }
+  .song-meta { display: flex; align-items: baseline; gap: 6px; min-width: 0; overflow: hidden; }
   .song-title { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .song-artist { color: var(--muted); font-size: 12px; white-space: nowrap; }
   .draft-badge {
@@ -727,11 +738,17 @@
   <div class="topbar">
     <!-- Persistent header: always visible -->
     <div class="topbar-header">
-      <div class="song-meta">
-        <div class="song-title" id="songTitle">—</div>
-        <div class="song-artist" id="songArtist"></div>
-        <span class="draft-badge" id="draftBadge" hidden>DRAFT</span>
-        <span class="edited-badge" id="editedBadge" hidden>EDITED</span>
+      <div class="song-block">
+        <div class="song-meta">
+          <div class="song-title" id="songTitle">—</div>
+          <div class="song-artist" id="songArtist"></div>
+          <span class="draft-badge" id="draftBadge" hidden>DRAFT</span>
+          <span class="edited-badge" id="editedBadge" hidden>EDITED</span>
+        </div>
+        <div class="song-nav">
+          <button class="btn nav-arrow" id="prevSong" title="Previous song">‹</button>
+          <button class="btn nav-arrow" id="nextSong" title="Next song">›</button>
+        </div>
       </div>
       <div class="meta-chip">Key<strong id="songKey">—</strong></div>
       <div class="meta-chip">BPM<strong id="songBpm">—</strong></div>
@@ -743,17 +760,15 @@
           <div class="section-btns" id="sectionBtns"></div>
         </div>
       </div>
-      <button class="btn icon" id="prevSong" title="Previous song">‹</button>
-      <button class="btn icon" id="nextSong" title="Next song">›</button>
-      <button class="btn primary" id="playBtn">▶ Play</button>
       <button class="btn" id="controlsToggle" title="Show / hide controls">⚙ ▾</button>
     </div>
 
     <!-- Collapsible controls -->
     <div class="topbar-controls" id="topbarControls">
-      <!-- Playback group -->
-      <div class="ctrl-group">
+      <!-- Playback group (centered) -->
+      <div class="ctrl-group playback-group">
         <button class="btn icon" id="restartBtn" title="Restart">⟲</button>
+        <button class="btn primary" id="playBtn">▶ Play</button>
         <div class="speed-row">
           <span>Scroll</span>
           <input type="range" id="speedSlider" min="10" max="200" value="36" />
@@ -761,8 +776,8 @@
           <button class="btn icon" id="autoFitBtn" title="Auto-fit to song duration">↺ Auto</button>
         </div>
       </div>
-      <!-- Chart group -->
-      <div class="ctrl-group">
+      <!-- Chart group (right-aligned) -->
+      <div class="ctrl-group chart-group">
         <button class="btn icon" id="editBtn" title="Edit chord chart">✏️</button>
         <button class="btn icon" id="resetEditBtn" hidden title="Reset edits">↺</button>
         <button class="btn icon" id="exportEditsBtn" title="Export edits">⬆</button>
@@ -3881,7 +3896,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260614g';
+const SW_BUILD = '20260614h';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
