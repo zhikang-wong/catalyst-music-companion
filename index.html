@@ -329,22 +329,35 @@
     z-index: 150;
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 12px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.14);
-    padding: 12px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 14px;
   }
   /* Re-assert hiding — the display:flex above would otherwise override [hidden]. */
   .settings-panel[hidden] { display: none; }
   .settings-row {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 18px;
     flex-wrap: wrap;
   }
-  .transpose > span:first-child { color: var(--muted); font-size: 11px; }
+  /* Larger, easier-to-tap controls inside the Settings overlay */
+  .settings-panel .btn {
+    font-size: 16px;
+    padding: 10px 18px;
+    min-height: 46px;
+  }
+  .settings-panel .btn.icon {
+    font-size: 20px;
+    min-width: 46px;
+    min-height: 46px;
+  }
+  .settings-panel .speed-row { font-size: 14px; gap: 12px; }
+  .settings-panel .transpose .meta-chip { font-size: 16px; }
+  .transpose > span:first-child { color: var(--muted); font-size: 14px; }
 
   .song-meta { display: flex; align-items: baseline; gap: 6px; min-width: 0; overflow: hidden; }
   .song-title { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -3972,7 +3985,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260614p';
+const SW_BUILD = '20260614q';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
