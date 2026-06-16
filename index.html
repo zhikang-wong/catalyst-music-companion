@@ -378,6 +378,14 @@
     border-radius: 10px;
     padding: 0 12px;
   }
+  /* Fixed-width values so the row never reflows when the key/value changes
+     (e.g. G -> G#), which would shift the centred bar + Settings overlay. */
+  .header-center .meta-chip strong {
+    display: inline-block;
+    min-width: 3.2ch;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
 
   .btn {
     background: #ffffff;
@@ -3964,7 +3972,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260614o';
+const SW_BUILD = '20260614p';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
