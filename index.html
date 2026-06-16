@@ -264,9 +264,9 @@
   }
   .header-top {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
+    flex-direction: column;
+    align-items: flex-start;   /* title + nav stacked, left-aligned */
+    gap: 6px;
   }
   /* Bottom row: nav + meta + playback + settings, centred; wrap if they can't fit. */
   .header-bottom {
@@ -796,7 +796,7 @@
   <div class="topbar">
     <!-- Persistent header: always visible -->
     <div class="topbar-header">
-      <!-- Top line: song title -->
+      <!-- Top line: song title, with prev/next/sections under it (left-aligned) -->
       <div class="header-top">
         <div class="song-meta">
           <div class="song-title" id="songTitle">—</div>
@@ -804,10 +804,6 @@
           <span class="draft-badge" id="draftBadge" hidden>DRAFT</span>
           <span class="edited-badge" id="editedBadge" hidden>EDITED</span>
         </div>
-      </div>
-
-      <!-- Controls line: nav + meta + playback + settings (centred, wraps if needed) -->
-      <div class="header-bottom">
         <div class="song-nav">
           <button class="btn nav-btn" id="prevSong" title="Previous song">‹ Previous</button>
           <button class="btn nav-btn" id="nextSong" title="Next song">Next ›</button>
@@ -819,6 +815,10 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Controls line: meta + playback + settings (centred, wraps if needed) -->
+      <div class="header-bottom">
         <div class="header-center">
           <div class="meta-chip">Key<strong id="songKey">—</strong></div>
           <div class="meta-chip">BPM<strong id="songBpm">—</strong></div>
@@ -3964,7 +3964,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260614n';
+const SW_BUILD = '20260614o';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
