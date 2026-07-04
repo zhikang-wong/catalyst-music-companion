@@ -718,6 +718,22 @@
     flex-shrink: 0;
   }
   .speed-row input[type=range] { width: clamp(80px, 12vw, 150px); accent-color: var(--accent); }
+  .speed-presets { display: flex; align-items: center; gap: 4px; }
+  .speed-btn {
+    background: #ffffff;
+    color: var(--fg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 7px;
+    font-size: 11px;
+    font-family: inherit;
+    cursor: pointer;
+    line-height: 1;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+  }
+  .speed-btn:hover { background: var(--chip-bg); border-color: #d1d5db; }
+  .speed-btn:active { transform: translateY(1px); }
+  .speed-btn.active { background: var(--accent); color: #ffffff; border-color: var(--accent); font-weight: 600; }
   .help { color: var(--muted); font-size: 11px; text-align: right; }
   .help kbd {
     background: var(--chip-bg); border: 1px solid var(--border);
@@ -851,6 +867,14 @@
               <span>Scroll</span>
               <input type="range" id="speedSlider" min="10" max="200" value="36" />
               <span id="speedLabel">–:––</span>
+              <div class="speed-presets" id="speedPresets">
+                <button class="speed-btn" data-pct="0.5" title="50% of song's natural speed">50%</button>
+                <button class="speed-btn" data-pct="0.75" title="75% of song's natural speed">75%</button>
+                <button class="speed-btn" data-pct="1" title="100% — auto-fit to song duration">100%</button>
+                <button class="speed-btn" data-pct="1.2" title="120% of song's natural speed">120%</button>
+                <button class="speed-btn" data-pct="1.5" title="150% of song's natural speed">150%</button>
+                <button class="speed-btn" data-pct="2" title="200% of song's natural speed">200%</button>
+              </div>
               <button class="btn icon" id="autoFitBtn" title="Auto-fit to song duration">↺ Auto</button>
             </div>
           </div>
@@ -1264,12 +1288,8 @@ I think I'd have a heart atta-a-a-a-a-ack,
  D
 I think I'd have a heart attack.
 
-Outro
-C C Em D
-C C Em D
-C C Em D
-C C Em D
-(Fade Out)
+End
+C
 `.trim()
         },
         {
@@ -2254,10 +2274,11 @@ Let the past be the past 'til it's weightless
 Verse (What it Sounds Like)
 We're shattering the silence, we're rising defiant
 Shouting in the quiet, you're not alone
+
+C# twice
 We listened to the demons, we let them get between us
 But none of us are out here on our own
 
-(enter)
 A                    B
 So, we were cowards, so, we were liars
 G#m                   C#m
@@ -3128,6 +3149,8 @@ const state = {
   parsed: [],
   transposeOffset: 0,
   scrollSpeed: 36,
+  baseScrollSpeed: 36,   // song's natural / auto-fit speed = 100%
+  scrollPct: 1,          // current multiplier applied via presets/slider
   playing: false,
   lastTs: 0,
   metroStart: 0,
@@ -3167,6 +3190,7 @@ const el = {
   restartBtn: document.getElementById('restartBtn'),
   speed: document.getElementById('speedSlider'),
   speedLabel: document.getElementById('speedLabel'),
+  speedPresets: document.getElementById('speedPresets'),
   autoFitBtn: document.getElementById('autoFitBtn'),
   sectionsToggle: document.getElementById('sectionsToggle'),
   sectionsPanel: document.getElementById('sectionsPanel'),
@@ -3481,12 +3505,14 @@ function loadSong(setIdx, songIdx) {
     requestAnimationFrame(() => {
       const scrollable = el.chart.scrollHeight - el.chart.clientHeight;
       if (scrollable > 0) {
-        const derived = scrollable / song.durationSec;
-        state.scrollSpeed = derived;
-        el.speed.value = Math.round(derived);
-        el.speedLabel.textContent = fmtETA(derived);
+        state.baseScrollSpeed = scrollable / song.durationSec;
+        applyScrollPct();   // keep the user's chosen % across songs
       }
     });
+  } else {
+    // No duration to fit — fall back to the app default as 100%.
+    state.baseScrollSpeed = 36;
+    applyScrollPct();
   }
 }
 
@@ -3578,10 +3604,8 @@ function exitEditMode(opts) {
       requestAnimationFrame(() => {
         const scrollable = el.chart.scrollHeight - el.chart.clientHeight;
         if (scrollable > 0) {
-          const derived = scrollable / song.durationSec;
-          state.scrollSpeed = derived;
-          el.speed.value = Math.round(derived);
-          el.speedLabel.textContent = fmtETA(derived);
+          state.baseScrollSpeed = scrollable / song.durationSec;
+          applyScrollPct();
         }
       });
     }
@@ -3878,21 +3902,48 @@ function fmtETA(pxPerSec) {
   return m + ':' + String(s).padStart(2, '0');
 }
 
+// Highlight whichever preset button matches the current multiplier.
+function updateSpeedPresetButtons() {
+  el.speedPresets.querySelectorAll('.speed-btn').forEach(b => {
+    b.classList.toggle('active', Math.abs(+b.dataset.pct - state.scrollPct) < 0.001);
+  });
+}
+
+// Apply the current multiplier against the song's base (100%) speed and
+// sync the slider, label and preset highlight. Clamped to the slider range.
+function applyScrollPct() {
+  const base = state.baseScrollSpeed || 36;
+  const clamped = Math.min(200, Math.max(10, base * state.scrollPct));
+  state.scrollSpeed = clamped;
+  el.speed.value = Math.round(clamped);
+  el.speedLabel.textContent = fmtETA(clamped);
+  updateSpeedPresetButtons();
+}
+
 function autoFit() {
   const song = currentSong();
   const scrollable = el.chart.scrollHeight - el.chart.clientHeight;
   if (!scrollable || !song.durationSec) return;
-  const derived = scrollable / song.durationSec;
-  state.scrollSpeed = derived;
-  el.speed.value = Math.min(200, Math.max(10, Math.round(derived)));
-  el.speedLabel.textContent = fmtETA(derived);
+  state.baseScrollSpeed = scrollable / song.durationSec;
+  state.scrollPct = 1;   // "Auto" fits exactly = 100%
+  applyScrollPct();
 }
 
 el.autoFitBtn.addEventListener('click', autoFit);
 
+el.speedPresets.querySelectorAll('.speed-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    state.scrollPct = +b.dataset.pct;
+    applyScrollPct();
+  });
+});
+
 el.speed.addEventListener('input', () => {
   state.scrollSpeed = +el.speed.value;
   el.speedLabel.textContent = fmtETA(state.scrollSpeed);
+  // Manual drag: rederive the multiplier so presets stay in sync.
+  state.scrollPct = state.scrollSpeed / (state.baseScrollSpeed || 36);
+  updateSpeedPresetButtons();
 });
 
 // Prev / Next — navigate within the current set, with end-of-set handoff
