@@ -181,6 +181,7 @@
   }
   .gig-name { font-weight: 700; font-size: 12px; color: var(--muted); flex-shrink: 0; }
   .set-tabs { display: flex; gap: 4px; flex: 1; justify-content: center; }
+  .gig-nav { display: flex; align-items: center; gap: 8px; flex-shrink: 0; position: relative; }
   .set-tab {
     background: transparent;
     border: 1px solid transparent;
@@ -717,7 +718,7 @@
     color: var(--muted); font-size: 11px;
     flex-shrink: 0;
   }
-  .speed-row input[type=range] { width: clamp(80px, 12vw, 150px); accent-color: var(--accent); }
+  .speed-row input[type=range] { width: clamp(200px, 40vw, 440px); height: 20px; accent-color: var(--accent); }
   .speed-presets { display: flex; align-items: center; gap: 4px; }
   .speed-btn {
     background: #ffffff;
@@ -827,6 +828,35 @@
   <div class="gigbar">
     <div class="gig-name" id="gigName">—</div>
     <div class="set-tabs" id="setTabs"></div>
+    <div class="gig-nav">
+      <button class="btn nav-btn" id="prevSong" title="Previous song">‹ Prev</button>
+      <button class="btn nav-btn" id="nextSong" title="Next song">Next ›</button>
+      <div class="settings-dd">
+        <button class="btn" id="controlsToggle" title="Chart tools">Settings ▾</button>
+        <div class="settings-panel" id="settingsPanel" hidden>
+          <!-- Line 1: edit / reset / export -->
+          <div class="settings-row">
+            <button class="btn" id="editBtn" title="Edit chord chart">✏️ Edit</button>
+            <button class="btn" id="resetEditBtn" hidden title="Reset edits">↺ Reset</button>
+            <button class="btn" id="exportEditsBtn" title="Export edits">⬆ Export</button>
+          </div>
+          <!-- Line 2: font size / transpose -->
+          <div class="settings-row">
+            <div class="speed-row">
+              <span>Font size</span>
+              <button class="btn icon" id="fontDecBtn" title="Smaller text">−</button>
+              <button class="btn icon" id="fontIncBtn" title="Larger text">+</button>
+            </div>
+            <div class="transpose">
+              <span>Transpose</span>
+              <span class="meta-chip">±<strong id="transOffset">0</strong></span>
+              <button class="btn icon" id="transDown">−</button>
+              <button class="btn icon" id="transUp">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Song top bar -->
@@ -841,17 +871,6 @@
           <span class="draft-badge" id="draftBadge" hidden>DRAFT</span>
           <span class="edited-badge" id="editedBadge" hidden>EDITED</span>
         </div>
-        <div class="song-nav">
-          <button class="btn nav-btn" id="prevSong" title="Previous song">‹ Previous</button>
-          <button class="btn nav-btn" id="nextSong" title="Next song">Next ›</button>
-          <!-- Section jump dropdown (beside prev/next) -->
-          <div class="sections-dd">
-            <button class="btn" id="sectionsToggle" title="Jump to section">⌖ Sections ▾</button>
-            <div class="sections-panel" id="sectionsPanel" hidden>
-              <div class="section-btns" id="sectionBtns"></div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Controls line: meta + playback + settings (centred, wraps if needed) -->
@@ -865,42 +884,14 @@
             <button class="btn primary" id="playBtn">▶ Play</button>
             <div class="speed-row">
               <span>Scroll</span>
-              <input type="range" id="speedSlider" min="10" max="200" value="36" />
+              <input type="range" id="speedSlider" min="5" max="200" step="1" value="18" />
               <span id="speedLabel">–:––</span>
               <div class="speed-presets" id="speedPresets">
-                <button class="speed-btn" data-pct="0.5" title="50% of song's natural speed">50%</button>
-                <button class="speed-btn" data-pct="0.75" title="75% of song's natural speed">75%</button>
-                <button class="speed-btn" data-pct="1" title="100% — auto-fit to song duration">100%</button>
-                <button class="speed-btn" data-pct="1.2" title="120% of song's natural speed">120%</button>
-                <button class="speed-btn" data-pct="1.5" title="150% of song's natural speed">150%</button>
-                <button class="speed-btn" data-pct="2" title="200% of song's natural speed">200%</button>
-              </div>
-              <button class="btn icon" id="autoFitBtn" title="Auto-fit to song duration">↺ Auto</button>
-            </div>
-          </div>
-        </div>
-        <!-- Settings dropdown: chart tools as an overlay -->
-        <div class="settings-dd">
-          <button class="btn" id="controlsToggle" title="Chart tools">Settings ▾</button>
-          <div class="settings-panel" id="settingsPanel" hidden>
-            <!-- Line 1: edit / reset / export -->
-            <div class="settings-row">
-              <button class="btn" id="editBtn" title="Edit chord chart">✏️ Edit</button>
-              <button class="btn" id="resetEditBtn" hidden title="Reset edits">↺ Reset</button>
-              <button class="btn" id="exportEditsBtn" title="Export edits">⬆ Export</button>
-            </div>
-            <!-- Line 2: font size / transpose -->
-            <div class="settings-row">
-              <div class="speed-row">
-                <span>Font size</span>
-                <button class="btn icon" id="fontDecBtn" title="Smaller text">−</button>
-                <button class="btn icon" id="fontIncBtn" title="Larger text">+</button>
-              </div>
-              <div class="transpose">
-                <span>Transpose</span>
-                <span class="meta-chip">±<strong id="transOffset">0</strong></span>
-                <button class="btn icon" id="transDown">−</button>
-                <button class="btn icon" id="transUp">+</button>
+                <button class="speed-btn" data-pct="0.5" title="Half the 100% reading speed">50%</button>
+                <button class="speed-btn" data-pct="0.75" title="75% of the reading speed">75%</button>
+                <button class="speed-btn" data-pct="1" title="100% — comfortable reading speed">100%</button>
+                <button class="speed-btn" data-pct="1.5" title="150% of the reading speed">150%</button>
+                <button class="speed-btn" data-pct="2" title="200% of the reading speed">200%</button>
               </div>
             </div>
           </div>
@@ -3190,13 +3181,18 @@ function transposeChord(chord, semis, useFlats) {
 function isFlatContext(key, offset) { return FLAT_KEYS.has(transposeKey(key, offset)); }
 
 // ----- State ------------------------------------------------
+// "100%" reading speed = this fraction of the auto-fit (scroll-to-fit-duration)
+// speed. Auto-fit alone scrolls too fast to read, so the comfortable baseline
+// is half of it; presets (50–200%) then scale from that.
+const READ_SCALE = 0.5;
+
 const state = {
   setIndex: 0,
   songIndex: 0,
   parsed: [],
   transposeOffset: 0,
-  scrollSpeed: 36,
-  baseScrollSpeed: 36,   // song's natural / auto-fit speed = 100%
+  scrollSpeed: 18,
+  baseScrollSpeed: 18,   // comfortable reading speed = 100% (½ of auto-fit)
   scrollPct: 1,          // current multiplier applied via presets/slider
   playing: false,
   lastTs: 0,
@@ -3238,7 +3234,6 @@ const el = {
   speed: document.getElementById('speedSlider'),
   speedLabel: document.getElementById('speedLabel'),
   speedPresets: document.getElementById('speedPresets'),
-  autoFitBtn: document.getElementById('autoFitBtn'),
   sectionsToggle: document.getElementById('sectionsToggle'),
   sectionsPanel: document.getElementById('sectionsPanel'),
   controlsToggle: document.getElementById('controlsToggle'),
@@ -3467,6 +3462,7 @@ function renderTOC() {
 // Each button jumps directly to that specific section (by line index).
 function renderSectionButtons() {
   const container = document.getElementById('sectionBtns');
+  if (!container) return;   // Sections dropdown removed from the UI
   container.innerHTML = '';
   state.parsed.forEach((node, lineIdx) => {
     if (node.type !== 'section') return;
@@ -3488,15 +3484,17 @@ function renderSectionButtons() {
 }
 
 // ----- Sections dropdown + controls collapse -----------------------------
-function openSectionsPanel() { el.sectionsPanel.hidden = false; el.sectionsToggle.classList.add('active'); }
-function closeSectionsPanel() { el.sectionsPanel.hidden = true; el.sectionsToggle.classList.remove('active'); }
-el.sectionsToggle.addEventListener('click', (e) => {
-  e.stopPropagation();
-  el.sectionsPanel.hidden ? openSectionsPanel() : closeSectionsPanel();
-});
-document.addEventListener('click', (e) => {
-  if (!el.sectionsPanel.hidden && !e.target.closest('.sections-dd')) closeSectionsPanel();
-});
+function openSectionsPanel() { if (!el.sectionsPanel) return; el.sectionsPanel.hidden = false; el.sectionsToggle.classList.add('active'); }
+function closeSectionsPanel() { if (!el.sectionsPanel) return; el.sectionsPanel.hidden = true; el.sectionsToggle.classList.remove('active'); }
+if (el.sectionsToggle) {
+  el.sectionsToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    el.sectionsPanel.hidden ? openSectionsPanel() : closeSectionsPanel();
+  });
+  document.addEventListener('click', (e) => {
+    if (!el.sectionsPanel.hidden && !e.target.closest('.sections-dd')) closeSectionsPanel();
+  });
+}
 
 // Settings dropdown (chart tools) — overlay, same pattern as Sections
 function openSettingsPanel() { el.settingsPanel.hidden = false; el.controlsToggle.classList.add('active'); el.controlsToggle.textContent = 'Settings ▴'; }
@@ -3552,13 +3550,13 @@ function loadSong(setIdx, songIdx) {
     requestAnimationFrame(() => {
       const scrollable = el.chart.scrollHeight - el.chart.clientHeight;
       if (scrollable > 0) {
-        state.baseScrollSpeed = scrollable / song.durationSec;
+        state.baseScrollSpeed = (scrollable / song.durationSec) * READ_SCALE;
         applyScrollPct();   // keep the user's chosen % across songs
       }
     });
   } else {
     // No duration to fit — fall back to the app default as 100%.
-    state.baseScrollSpeed = 36;
+    state.baseScrollSpeed = 18;
     applyScrollPct();
   }
 }
@@ -3651,7 +3649,7 @@ function exitEditMode(opts) {
       requestAnimationFrame(() => {
         const scrollable = el.chart.scrollHeight - el.chart.clientHeight;
         if (scrollable > 0) {
-          state.baseScrollSpeed = scrollable / song.durationSec;
+          state.baseScrollSpeed = (scrollable / song.durationSec) * READ_SCALE;
           applyScrollPct();
         }
       });
@@ -3959,24 +3957,13 @@ function updateSpeedPresetButtons() {
 // Apply the current multiplier against the song's base (100%) speed and
 // sync the slider, label and preset highlight. Clamped to the slider range.
 function applyScrollPct() {
-  const base = state.baseScrollSpeed || 36;
-  const clamped = Math.min(200, Math.max(10, base * state.scrollPct));
+  const base = state.baseScrollSpeed || 18;
+  const clamped = Math.min(200, Math.max(5, base * state.scrollPct));
   state.scrollSpeed = clamped;
   el.speed.value = Math.round(clamped);
   el.speedLabel.textContent = fmtETA(clamped);
   updateSpeedPresetButtons();
 }
-
-function autoFit() {
-  const song = currentSong();
-  const scrollable = el.chart.scrollHeight - el.chart.clientHeight;
-  if (!scrollable || !song.durationSec) return;
-  state.baseScrollSpeed = scrollable / song.durationSec;
-  state.scrollPct = 1;   // "Auto" fits exactly = 100%
-  applyScrollPct();
-}
-
-el.autoFitBtn.addEventListener('click', autoFit);
 
 el.speedPresets.querySelectorAll('.speed-btn').forEach(b => {
   b.addEventListener('click', () => {
@@ -3989,7 +3976,7 @@ el.speed.addEventListener('input', () => {
   state.scrollSpeed = +el.speed.value;
   el.speedLabel.textContent = fmtETA(state.scrollSpeed);
   // Manual drag: rederive the multiplier so presets stay in sync.
-  state.scrollPct = state.scrollSpeed / (state.baseScrollSpeed || 36);
+  state.scrollPct = state.scrollSpeed / (state.baseScrollSpeed || 18);
   updateSpeedPresetButtons();
 });
 
