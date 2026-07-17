@@ -441,6 +441,9 @@
     line-height: 1;
   }
   .setlist-toggle.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  /* Keep the vertical centering on press — the generic .btn:active translateY(1px)
+     would otherwise replace translateY(-50%) and make the button jump down. */
+  .setlist-toggle:active { transform: translateY(-50%); }
   .beats {
     display: flex;
     gap: 14px;
@@ -3192,7 +3195,6 @@ const state = {
   beatsPerBar: 4,
   currentBeat: -1,
   virtualScroll: 0,  // float accumulator so fractional px/frame motion isn't lost
-  isProgrammaticScroll: false,  // true while tick is setting scrollTop
   pendingSetTransition: null,
   editMode: false,
   editSaveTimer: null,
@@ -3860,14 +3862,13 @@ function startLoop() {
   if (rafId === null) { state.lastTs = 0; rafId = requestAnimationFrame(tick); }
 }
 function tick(ts) {
+  rafId = null;   // this frame has fired; only reschedule below if still playing
   if (!state.lastTs) state.lastTs = ts;
   const dt = (ts - state.lastTs) / 1000;
   state.lastTs = ts;
-  if (!state.playing) { rafId = null; return; }   // stop looping once paused
+  if (!state.playing) return;
   state.virtualScroll += state.scrollSpeed * dt;
-  state.isProgrammaticScroll = true;
   el.chart.scrollTop = state.virtualScroll;
-  state.isProgrammaticScroll = false;
   updateHighlight();
   updateMetronome(ts);
   updateProgress();
@@ -3911,15 +3912,20 @@ function togglePlay(force) {
 el.playBtn.addEventListener('click', () => togglePlay());
 el.restartBtn.addEventListener('click', () => { el.chart.scrollTop = 0; state.virtualScroll = 0; togglePlay(false); });
 
-// A manual scroll (swipe / drag) that wasn't driven by the tick pauses
-// autoscroll, so you can freely browse back/forward; tap the chart (or Play)
-// to resume from wherever you stopped.
+// A real user gesture on the chart (touch drag / wheel / trackpad) pauses
+// autoscroll so you can browse freely; tap the chart (or Play) to resume.
+// We detect the gesture directly rather than via the 'scroll' event, because
+// programmatic scrollTop changes fire 'scroll' asynchronously on iOS — which
+// used to make autoscroll instantly pause itself the moment Play was pressed.
+['wheel', 'touchmove'].forEach(evt =>
+  el.chart.addEventListener(evt, () => { if (state.playing) togglePlay(false); }, { passive: true })
+);
+// While paused, keep virtualScroll + the read-line / progress synced to the real
+// scroll position. During autoscroll the tick owns the position, so ignore.
 let uiSyncRaf = null;
 el.chart.addEventListener('scroll', () => {
-  if (state.isProgrammaticScroll) return;
-  if (state.playing) togglePlay(false);           // manual scroll interrupts autoscroll
+  if (state.playing) return;
   state.virtualScroll = el.chart.scrollTop;
-  // Keep the read-line highlight + progress in sync while paused, throttled to a frame.
   if (uiSyncRaf === null) {
     uiSyncRaf = requestAnimationFrame(() => { uiSyncRaf = null; updateHighlight(); updateProgress(); });
   }
