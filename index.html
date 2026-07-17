@@ -420,14 +420,17 @@
     justify-content: center;
     grid-column: 2;
   }
-  /* Permanent setlist show/hide toggle, pinned to the left of the metronome bar */
+  /* Permanent setlist show/hide toggle, pinned to the left of the metronome bar.
+     Sized as a comfortable touch target (>=44px) and layered above the beats. */
   .setlist-toggle {
     position: absolute;
     left: 12px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 13px;
-    padding: 6px 12px;
+    z-index: 3;
+    font-size: 14px;
+    padding: 10px 16px;
+    min-height: 44px;
     line-height: 1;
   }
   .setlist-toggle.active { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -573,10 +576,13 @@
     border-radius: 6px;
     transition: background 0.18s, box-shadow 0.18s;
   }
-  /* Now-playing line: what sits at the read-line as the chart scrolls */
+  /* Now-playing line: what sits at the read-line as the chart scrolls.
+     Bold yellow highlighter so it's unmistakable against blue chords /
+     orange section headers. */
   .line.active {
-    background: rgba(217,119,6,0.16);
-    box-shadow: inset 4px 0 0 var(--accent);
+    background: rgba(250, 204, 21, 0.55);
+    box-shadow: inset 6px 0 0 #f59e0b;
+    border-radius: 6px;
   }
   .line.section {
     color: var(--section);
@@ -712,23 +718,8 @@
     color: var(--muted); font-size: 11px;
     flex-shrink: 0;
   }
-  .speed-row input[type=range] { width: clamp(200px, 40vw, 440px); height: 20px; accent-color: var(--accent); }
-  .speed-presets { display: flex; align-items: center; gap: 4px; }
-  .speed-btn {
-    background: #ffffff;
-    color: var(--fg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 3px 7px;
-    font-size: 11px;
-    font-family: inherit;
-    cursor: pointer;
-    line-height: 1;
-    transition: background 0.12s, border-color 0.12s, color 0.12s;
-  }
-  .speed-btn:hover { background: var(--chip-bg); border-color: #d1d5db; }
-  .speed-btn:active { transform: translateY(1px); }
-  .speed-btn.active { background: var(--accent); color: #ffffff; border-color: var(--accent); font-weight: 600; }
+  .speed-row input[type=range] { width: clamp(220px, 46vw, 520px); height: 22px; accent-color: var(--accent); }
+  .speed-end { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
   .help { color: var(--muted); font-size: 11px; text-align: right; }
   .help kbd {
     background: var(--chip-bg); border: 1px solid var(--border);
@@ -880,15 +871,10 @@
             <button class="btn primary" id="playBtn">▶ Play</button>
             <div class="speed-row">
               <span>Scroll</span>
-              <input type="range" id="speedSlider" min="5" max="200" step="1" value="18" />
+              <span class="speed-end">slow</span>
+              <input type="range" id="speedSlider" min="0" max="100" step="1" value="50" title="Scroll speed — middle matches the song's duration" />
+              <span class="speed-end">fast</span>
               <span id="speedLabel">–:––</span>
-              <div class="speed-presets" id="speedPresets">
-                <button class="speed-btn" data-pct="0.5" title="Half the 100% reading speed">50%</button>
-                <button class="speed-btn" data-pct="0.75" title="75% of the reading speed">75%</button>
-                <button class="speed-btn" data-pct="1" title="100% — comfortable reading speed">100%</button>
-                <button class="speed-btn" data-pct="1.5" title="150% of the reading speed">150%</button>
-                <button class="speed-btn" data-pct="2" title="200% of the reading speed">200%</button>
-              </div>
             </div>
           </div>
         </div>
@@ -3178,19 +3164,20 @@ function transposeChord(chord, semis, useFlats) {
 function isFlatContext(key, offset) { return FLAT_KEYS.has(transposeKey(key, offset)); }
 
 // ----- State ------------------------------------------------
-// "100%" reading speed = this fraction of the auto-fit (scroll-to-fit-duration)
-// speed. Auto-fit alone scrolls too fast to read, so the comfortable baseline
-// is half of it; presets (50–200%) then scale from that.
-const READ_SCALE = 0.5;
+// The scroll slider is exponential around the song's auto-fit speed:
+//   slider 50 (middle, default) = autoFitSpeed  → scrolls in the song's exact duration
+//   slider 0                    = autoFitSpeed / SPEED_SPAN  (slower)
+//   slider 100                  = autoFitSpeed * SPEED_SPAN  (faster)
+const SPEED_SPAN = 2;
+const SPEED_MID = 50;
 
 const state = {
   setIndex: 0,
   songIndex: 0,
   parsed: [],
   transposeOffset: 0,
-  scrollSpeed: 18,
-  baseScrollSpeed: 18,   // comfortable reading speed = 100% (½ of auto-fit)
-  scrollPct: 1,          // current multiplier applied via presets/slider
+  scrollSpeed: 36,
+  autoFitSpeed: 36,   // px/s that scrolls the chart in the song's exact duration
   playing: false,
   lastTs: 0,
   metroStart: 0,
@@ -3230,7 +3217,6 @@ const el = {
   restartBtn: document.getElementById('restartBtn'),
   speed: document.getElementById('speedSlider'),
   speedLabel: document.getElementById('speedLabel'),
-  speedPresets: document.getElementById('speedPresets'),
   sectionsToggle: document.getElementById('sectionsToggle'),
   sectionsPanel: document.getElementById('sectionsPanel'),
   controlsToggle: document.getElementById('controlsToggle'),
@@ -3539,30 +3525,29 @@ function loadSong(setIdx, songIdx) {
   el.chart.scrollTop = 0;
   state.virtualScroll = 0;
 
-  // If song has durationSec, auto-calibrate scroll speed so the chart
-  // scrolls end-to-end in exactly that time. Progress bar then shows
-  // real elapsed/remaining time for the song.
+  // If song has durationSec, calibrate the auto-fit speed so that the slider's
+  // middle scrolls the chart end-to-end in exactly that time.
   if (song.durationSec && sourceChordPro) {
     calibrateScrollBase(song);
   } else {
-    // No duration to fit — fall back to the app default as 100%.
-    state.baseScrollSpeed = 18;
-    applyScrollPct();
+    // No duration to fit — pick a sensible default auto-fit speed.
+    state.autoFitSpeed = 36;
+    applySliderSpeed();
   }
   // One-shot paint of the read-line highlight + progress (the rAF loop only
   // runs while playing, so nothing else refreshes these until then).
   requestAnimationFrame(() => { updateHighlight(); updateProgress(); });
 }
 
-// Derive the per-song base scroll speed once layout has settled. Retries across
+// Derive the per-song auto-fit speed once layout has settled. Retries across
 // frames until the chart actually has a scrollable height (first paint / fonts
 // can lag a frame or two), so calibration never silently falls back.
 function calibrateScrollBase(song, tries) {
   tries = tries || 0;
   const scrollable = el.chart.scrollHeight - el.chart.clientHeight;
   if (scrollable > 0) {
-    state.baseScrollSpeed = (scrollable / song.durationSec) * READ_SCALE;
-    applyScrollPct();   // keep the user's chosen % across songs
+    state.autoFitSpeed = scrollable / song.durationSec;
+    applySliderSpeed();   // keep the slider position, recompute speed for this song
   } else if (tries < 30) {
     requestAnimationFrame(() => calibrateScrollBase(song, tries + 1));
   }
@@ -3973,38 +3958,17 @@ function fmtETA(pxPerSec) {
   return m + ':' + String(s).padStart(2, '0');
 }
 
-// Highlight whichever preset button matches the current multiplier.
-function updateSpeedPresetButtons() {
-  el.speedPresets.querySelectorAll('.speed-btn').forEach(b => {
-    b.classList.toggle('active', Math.abs(+b.dataset.pct - state.scrollPct) < 0.001);
-  });
-}
-
-// Apply the current multiplier against the song's base (100%) speed and
-// sync the slider, label and preset highlight. Clamped to the slider range.
-function applyScrollPct() {
-  const base = state.baseScrollSpeed || 18;
-  const clamped = Math.min(200, Math.max(5, base * state.scrollPct));
-  state.scrollSpeed = clamped;
-  el.speed.value = Math.round(clamped);
-  el.speedLabel.textContent = fmtETA(clamped);
-  updateSpeedPresetButtons();
-}
-
-el.speedPresets.querySelectorAll('.speed-btn').forEach(b => {
-  b.addEventListener('click', () => {
-    state.scrollPct = +b.dataset.pct;
-    applyScrollPct();
-  });
-});
-
-el.speed.addEventListener('input', () => {
-  state.scrollSpeed = +el.speed.value;
+// Map the slider (0–100, middle 50) to an actual scroll speed, exponential
+// around the song's auto-fit speed so the middle scrolls in the song's exact
+// duration and each half doubles / halves it. Updates the ETA label.
+function applySliderSpeed() {
+  const v = +el.speed.value;
+  const mult = Math.pow(SPEED_SPAN, (v - SPEED_MID) / SPEED_MID);
+  state.scrollSpeed = state.autoFitSpeed * mult;
   el.speedLabel.textContent = fmtETA(state.scrollSpeed);
-  // Manual drag: rederive the multiplier so presets stay in sync.
-  state.scrollPct = state.scrollSpeed / (state.baseScrollSpeed || 18);
-  updateSpeedPresetButtons();
-});
+}
+
+el.speed.addEventListener('input', applySliderSpeed);
 
 // Prev / Next — navigate within the current set, with end-of-set handoff
 el.prevSong.addEventListener('click', () => {
