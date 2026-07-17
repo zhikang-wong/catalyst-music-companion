@@ -154,9 +154,12 @@
     gap: 10px;
   }
   .gig-name { font-weight: 700; font-size: 12px; color: var(--muted); flex-shrink: 0; }
+  /* When the sidebar is open it already shows the gig name in its header, so
+     hide the bar's copy to give the tabs room (prevents Set 1 / Encore clipping). */
+  body:not(.sidebar-collapsed) .gig-name { display: none; }
   /* Tabs take the flexible middle and scroll horizontally if cramped, so the
      pinned gig-nav (Prev/Next/Settings) is never pushed off-screen. */
-  .set-tabs { display: flex; gap: 4px; flex: 1 1 0; min-width: 0; justify-content: center; overflow-x: auto; scrollbar-width: none; }
+  .set-tabs { display: flex; gap: 4px; flex: 1 1 0; min-width: 0; justify-content: safe center; overflow-x: auto; scrollbar-width: none; }
   .set-tabs::-webkit-scrollbar { display: none; }
   .set-tab { flex-shrink: 0; }
   .gig-nav { display: flex; align-items: center; gap: 8px; flex-shrink: 0; position: relative; }
@@ -262,7 +265,11 @@
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
+    flex: 1 1 auto;
+    min-width: 0;
   }
+  /* Let the playback cluster (and its slider) grow to fill the row width. */
+  .playback-group { flex: 1 1 260px; min-width: 0; }
   .settings-dd { flex-shrink: 0; position: relative; }
 
   /* Uniform control height across nav, sections, settings, chips, playback group */
@@ -716,10 +723,11 @@
   .speed-row {
     display: flex; align-items: center; gap: 8px;
     color: var(--muted); font-size: 11px;
-    flex-shrink: 0;
+    min-width: 0;   /* allow the row to shrink so the FAST label never clips */
   }
-  .speed-row input[type=range] { width: clamp(220px, 46vw, 520px); height: 22px; accent-color: var(--accent); }
-  .speed-end { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  /* Slider fills available space and shrinks when the sidebar narrows the row. */
+  .speed-row input[type=range] { flex: 1 1 120px; width: auto; min-width: 0; max-width: 520px; height: 22px; accent-color: var(--accent); }
+  .speed-end { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0; }
   .help { color: var(--muted); font-size: 11px; text-align: right; }
   .help kbd {
     background: var(--chip-bg); border: 1px solid var(--border);
@@ -3339,13 +3347,25 @@ function formatTime(s) {
 function renderGigBar() {
   el.gigName.textContent = GIG.name;
   el.setTabs.innerHTML = '';
+  let activeTab = null;
   GIG.sets.forEach((s, i) => {
     const b = document.createElement('button');
     b.className = 'set-tab' + (i === state.setIndex ? ' active' : '');
     b.textContent = s.name;
     b.addEventListener('click', () => loadSong(i, 0));
     el.setTabs.appendChild(b);
+    if (i === state.setIndex) activeTab = b;
   });
+  // When the tabs overflow (narrow width + sidebar open), keep the active set
+  // scrolled into view instead of clipped by the centered layout.
+  if (activeTab) {
+    requestAnimationFrame(() => {
+      const c = el.setTabs, t = activeTab;
+      // position of the tab within the scroll content (rect-based, not offsetParent)
+      const rel = (t.getBoundingClientRect().left - c.getBoundingClientRect().left) + c.scrollLeft;
+      c.scrollLeft = rel - (c.clientWidth - t.offsetWidth) / 2;
+    });
+  }
 }
 
 function renderSongPicker() { /* removed — sidebar TOC handles navigation */ }
