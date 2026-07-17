@@ -86,29 +86,6 @@
   }
   .toc-collapse-btn:hover { background: var(--chip-bg); color: var(--fg); }
 
-  /* Floating "show sidebar" pill (visible only when sidebar is collapsed) */
-  .toc-show-btn {
-    display: none;
-    position: fixed;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 200;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 0 10px 10px 0;
-    padding: 16px 10px;
-    font-size: 14px;
-    cursor: pointer;
-    box-shadow: 2px 0 8px rgba(0,0,0,0.15);
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-  }
-  .toc-show-btn:hover { background: #b45309; }
-
   /* Collapsed state: grid shrinks sidebar to 0 */
   body.sidebar-collapsed {
     grid-template-columns: 0 1fr;
@@ -118,9 +95,6 @@
     min-width: 0;
     overflow: hidden;
     border-right: none;
-  }
-  body.sidebar-collapsed .toc-show-btn {
-    display: block;
   }
   body.sidebar-collapsed .toc-collapse-btn {
     display: none;
@@ -433,6 +407,7 @@
 
   /* Metronome bar — own row above the progress strip */
   .metronome-bar {
+    position: relative;
     background: var(--panel);
     border-bottom: 1px solid var(--border);
     padding: 6px 16px;
@@ -441,6 +416,17 @@
     justify-content: center;
     grid-column: 2;
   }
+  /* Permanent setlist show/hide toggle, pinned to the left of the metronome bar */
+  .setlist-toggle {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 13px;
+    padding: 6px 12px;
+    line-height: 1;
+  }
+  .setlist-toggle.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   .beats {
     display: flex;
     gap: 14px;
@@ -821,8 +807,6 @@
     </div>
     <div class="toc-content" id="toc-content"></div>
   </div>
-  <!-- Floating button to show sidebar when collapsed -->
-  <button class="toc-show-btn" id="toc-show" aria-label="Show sidebar" title="Show setlist">▶</button>
 
   <!-- Gig bar -->
   <div class="gigbar">
@@ -902,6 +886,7 @@
 
   <!-- Metronome bar -->
   <div class="metronome-bar">
+    <button class="btn setlist-toggle" id="setlistToggle" title="Show/hide setlist">☰ Setlist</button>
     <div class="beats" id="beats"></div>
   </div>
 
@@ -4042,18 +4027,33 @@ document.addEventListener('click', e => {
   }
 });
 
-// Sidebar collapse/expand (desktop full-screen toggle)
+// Sidebar collapse/expand — permanent toggle in the metronome bar (+ in-sidebar ◀)
 const tocCollapseBtn = document.getElementById('toc-collapse');
-const tocShowBtn = document.getElementById('toc-show');
-function collapseSidebar() {
-  document.body.classList.add('sidebar-collapsed');
-  tocShowBtn.textContent = '▶ Setlist';
+const setlistToggle = document.getElementById('setlistToggle');
+function updateSetlistToggle() {
+  if (!setlistToggle) return;
+  // "active" = setlist currently showing. On desktop/iPad that's simply the
+  // (not-)collapsed grid state; on mobile it's whether the drawer is open.
+  const open = window.matchMedia('(max-width: 767px)').matches
+    ? tocSidebar.classList.contains('open')
+    : !document.body.classList.contains('sidebar-collapsed');
+  setlistToggle.classList.toggle('active', open);
 }
-function expandSidebar() {
-  document.body.classList.remove('sidebar-collapsed');
+function collapseSidebar() { document.body.classList.add('sidebar-collapsed'); updateSetlistToggle(); }
+function expandSidebar() { document.body.classList.remove('sidebar-collapsed'); updateSetlistToggle(); }
+function toggleSidebar() {
+  if (window.matchMedia('(max-width: 767px)').matches) {
+    tocSidebar.classList.toggle('open');   // mobile: slide-in drawer
+  } else {
+    document.body.classList.toggle('sidebar-collapsed');   // desktop/iPad: grid collapse
+  }
+  updateSetlistToggle();
 }
 if (tocCollapseBtn) tocCollapseBtn.addEventListener('click', collapseSidebar);
-if (tocShowBtn) tocShowBtn.addEventListener('click', expandSidebar);
+if (setlistToggle) setlistToggle.addEventListener('click', (e) => { e.stopPropagation(); toggleSidebar(); });
+// Re-sync the highlight on resize / orientation change (mobile drawer vs desktop grid).
+window.addEventListener('resize', updateSetlistToggle);
+updateSetlistToggle();
 
 // Keyboard shortcuts
 document.addEventListener('keydown', e => {
