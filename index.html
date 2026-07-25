@@ -427,23 +427,16 @@
     justify-content: center;
     grid-column: 2;
   }
-  /* Permanent setlist show/hide toggle, pinned to the left of the metronome bar.
-     Sized as a comfortable touch target (>=44px) and layered above the beats. */
+  /* Permanent setlist show/hide toggle — icon-only, first item in the gig bar
+     (top bar) next to the "Catalyst — Gig 4" header. */
   .setlist-toggle {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 3;
-    font-size: 14px;
-    padding: 10px 16px;
-    min-height: 44px;
+    flex-shrink: 0;
+    height: var(--ctl-h);
+    padding: 0 12px;
+    font-size: 18px;
     line-height: 1;
   }
   .setlist-toggle.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-  /* Keep the vertical centering on press — the generic .btn:active translateY(1px)
-     would otherwise replace translateY(-50%) and make the button jump down. */
-  .setlist-toggle:active { transform: translateY(-50%); }
   .beats {
     display: flex;
     gap: 14px;
@@ -820,6 +813,7 @@
 
   <!-- Gig bar -->
   <div class="gigbar">
+    <button class="btn setlist-toggle" id="setlistToggle" title="Show/hide setlist" aria-label="Show/hide setlist">☰</button>
     <div class="gig-name" id="gigName">—</div>
     <div class="set-tabs" id="setTabs"></div>
     <div class="gig-nav">
@@ -899,7 +893,6 @@
 
   <!-- Metronome bar -->
   <div class="metronome-bar">
-    <button class="btn setlist-toggle" id="setlistToggle" title="Show/hide setlist">☰ Setlist</button>
     <div class="beats" id="beats"></div>
   </div>
 
