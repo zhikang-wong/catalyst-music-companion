@@ -852,6 +852,10 @@
           <div class="settings-row">
             <button class="btn" id="wakeToggle" title="Keep the iPad screen from sleeping during a set (uses more battery)">🔆 Keep screen awake: On</button>
           </div>
+          <!-- Line 4: chords-only summary view -->
+          <div class="settings-row">
+            <button class="btn" id="chordsOnlyToggle" title="Show just the chord progression per section, with lyrics hidden">🎸 Chords only: Off</button>
+          </div>
         </div>
       </div>
     </div>
@@ -3254,6 +3258,7 @@ const state = {
   editMode: false,
   editSaveTimer: null,
   chartVariant: 'chords',  // 'chords' | key in song.variants
+  chordsOnly: localStorage.getItem('chordsOnly') === 'true',  // default off
 };
 
 function currentSet() { return GIG.sets[state.setIndex]; }
@@ -3792,6 +3797,7 @@ function renderChart() {
   const useFlats = isFlatContext(s.key, state.transposeOffset);
   state.parsed.forEach((node, i) => {
     if (node.type === 'blank') {
+      if (state.chordsOnly) return;   // skip spacer lines in the condensed view
       const div = document.createElement('div');
       div.className = 'line blank';
       div.dataset.lineIndex = i;
@@ -3832,6 +3838,30 @@ function renderChart() {
           const span = document.createElement('span');
           span.className = 'chord-token';
           span.textContent = transposeChord(p.chord, state.transposeOffset, useFlats);
+          chordRow.appendChild(span);
+        }
+        lineDiv.appendChild(chordRow);
+        el.chart.appendChild(lineDiv);
+        return;
+      }
+
+      // Chords-only summary view: collapse this line down to its chord
+      // sequence (adjacent duplicates merged), lyrics dropped entirely.
+      if (state.chordsOnly) {
+        const chords = [];
+        for (const p of node.parts) {
+          if (!p.chord) continue;
+          const t = transposeChord(p.chord, state.transposeOffset, useFlats);
+          if (chords[chords.length - 1] !== t) chords.push(t);
+        }
+        if (!chords.length) return;   // pure-lyric line: nothing to summarise
+        lineDiv.classList.add('chord-only');
+        const chordRow = document.createElement('div');
+        chordRow.className = 'chord-row chord-only-row';
+        for (const t of chords) {
+          const span = document.createElement('span');
+          span.className = 'chord-token';
+          span.textContent = t;
           chordRow.appendChild(span);
         }
         lineDiv.appendChild(chordRow);
@@ -4182,6 +4212,22 @@ window.addEventListener('pointerdown', function onceGesture() {
   acquireWakeLock();
   window.removeEventListener('pointerdown', onceGesture);
 });
+// ----- Chords-only summary view ------------------------------
+// Hides lyrics and condenses each line to its chord sequence, per section.
+const chordsOnlyToggle = document.getElementById('chordsOnlyToggle');
+function renderChordsOnlyToggle() {
+  if (!chordsOnlyToggle) return;
+  chordsOnlyToggle.textContent = '🎸 Chords only: ' + (state.chordsOnly ? 'On' : 'Off');
+  chordsOnlyToggle.classList.toggle('active', state.chordsOnly);
+}
+if (chordsOnlyToggle) chordsOnlyToggle.addEventListener('click', () => {
+  state.chordsOnly = !state.chordsOnly;
+  localStorage.setItem('chordsOnly', state.chordsOnly ? 'true' : 'false');
+  renderChordsOnlyToggle();
+  renderChart();
+});
+renderChordsOnlyToggle();
+
 if (wakeToggle) wakeToggle.addEventListener('click', () => {
   keepAwake = !keepAwake;
   localStorage.setItem('keepAwake', keepAwake ? 'true' : 'false');
