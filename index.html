@@ -1075,7 +1075,7 @@ Verse 1
 大家都喧著聊著笑著 今晚多開心
 最角落裏的我 笑得多合羣
 盤底的洋蔥像我 永遠是調味品
-   F   F  G   G   (enter)
+                G   
 偷偷的看著你 偷偷的隱藏著自己
 
 Chorus
@@ -1876,7 +1876,7 @@ Last Chorus
 该遗憾的不是我
 
 Ending
-D# F G# D#
+D# F G# A# D#
 `.trim()
         },
         {
@@ -2635,7 +2635,8 @@ E          D#       C# B
 將我淹埋
 
 Ending
-Repeat Chorus
+E C# A F# B
+E
 `.trim()
         },
         {
@@ -2753,7 +2754,8 @@ A                        B     E
 你始终有千万种理由 我一直都跟随你的感受
 F#      B (A)   G#         C#
 让你疯 让你去放纵 以为你 有天会感动
-   F#     G#       C#  (drag)
+                       (drag C#)
+   F#     G#       C#  
 关于流言 我装作无动于衷
 
 C#                    G#
@@ -3000,94 +3002,90 @@ Intro
 F G C
 
 Verse
-F                     G7
 我聽見雨滴 落在青青草地
-C                     F
 我聽見遠方 下課鐘聲響起
-Dm                 G7
 可是我沒有聽見你的聲音
-    C             F
 認真呼喚我姓名
 
-F                     G7
+F          G7
 愛上你的時候 還不懂感情
-C                     F
+C          F
 離別了 才覺得刻骨銘心
-Dm                   G7
+Dm           G7
 為什麼沒有發現 遇見了你
-       C              F
+   C       F
 是生命最好的事情
 
 Pre-Chorus (enter)
-             Bb               C
+      Bb        C
 也許當時 忙著微笑和哭泣
-             Am           Dm
+     Am      Dm
 忙著追逐天空中的流星
-                G
+       G
 人理所當然的忘記
-                           C
+             C
 是誰風裡 雨裡 一直默默守護在原地
 
 Chorus
-                  F                 C
+         F       C
 原來你是 我最想留住的幸運
-                       Dm              Am
+           Dm       Am
 原來我們 和愛情曾經靠得那麼近
-                       Bb               F
+          Bb        F
 那為我對抗世界的決定 那陪我淋的雨
-         G7             C
+    G7       C
 一幕幕都是你 一塵不染的真心
 
-F                   C
+F         C
 與你相遇 好幸運
-                        Dm             Am
+           Dm       Am
 可我已失去 為你淚流滿面的權利
-                      Bb                F
+          Bb        F
 但願在我看不到的天際 你張開了雙翼
-          G7    C
+    G7       C
 遇見你的注定   她會有多幸運
 
 Interlude
 F G C
 
 Verse
-F                        G7
+F            G7
 青春是段跌跌撞撞的旅行
-C                    F
+C         F
 擁有著後知後覺的美麗
-Dm                  G7
+Dm         G7
 來不及感謝 是你給我勇氣
-      C              F
+  C      F
 讓我能做回我自己
 
 
 Pre-Chorus (staccato effect)
-             Bb               C
+      Bb        C
 也許當時 忙著微笑和哭泣
-             Am           Dm
+     Am      Dm
 忙著追逐天空中的流星
-                G
+       G
 人理所當然的忘記
-                           C
+             C
 是誰風裡 雨裡 一直默默守護在原地
 
 Chorus
-                  F                 C
+         F       C
 原來你是 我最想留住的幸運
-                       Dm              Am
+           Dm       Am
 原來我們 和愛情曾經靠得那麼近
-                       Bb               F
+          Bb        F
 那為我對抗世界的決定 那陪我淋的雨
-         G7             C
+    G7       C
 一幕幕都是你 一塵不染的真心
 
-F                   C
+F         C
 與你相遇 好幸運
-                 (C#)  Dm             Am  (G#)
+      (C#)  Dm       Am  
 可我已失去 為你淚流滿面的權利
-                      Bb                F
+      (G#) Bb       F
 但願在我看不到的天際 你張開了雙翼
-          G7        Bb        C
+   G7      Bb        C
 遇見你的注定   woah oh
 她會有多幸運
 `.trim(),
@@ -3410,7 +3408,7 @@ const el = {
 // ----- Edited chord chart persistence (localStorage) -----------
 // When SOURCE_VERSION changes, any localStorage edits that were baked into
 // source are cleared so the device picks up the new source instead of stale edits.
-const SOURCE_VERSION = '20260725';
+const SOURCE_VERSION = '20260726';
 (function purgeStaleEdits() {
   const vkey = 'sourceVersion:' + GIG.name;
   if (localStorage.getItem(vkey) !== SOURCE_VERSION) {
@@ -4340,7 +4338,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260725a';
+const SW_BUILD = '20260726a';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
