@@ -2852,15 +2852,6 @@ Chorus
    C    B   Am7   D  G
 还有伤 还有痛 还要走 还有我
 
-    G    F#  Em      D
-朋友 一生一起走 那些日子 不再有
-   C    B   Am7    D
-一句话 一辈子 一生情 一杯酒
-    G    F#  Em       D
-朋友 不曾孤单过 一声朋友 你会懂
-   C    B   Am7   D  G
-还有伤 还有痛 还要走 还有我
-
 Transition
 Eb 
 
@@ -2874,12 +2865,12 @@ Last Chorus
    C#     C     A#    D#
 还有伤 还有痛 还要走 还有我
 
-   C#     C     A#    D#
+   C#     C     A#    G#
 一句话 一辈子 一生情 一杯酒
 
 Ending
 G#  G  F  D#
-C#  C  A# D#
+C#  C  A#  G#
 `.trim()
         },
         {
@@ -3408,7 +3399,7 @@ const el = {
 // ----- Edited chord chart persistence (localStorage) -----------
 // When SOURCE_VERSION changes, any localStorage edits that were baked into
 // source are cleared so the device picks up the new source instead of stale edits.
-const SOURCE_VERSION = '20260726';
+const SOURCE_VERSION = '20260727';
 (function purgeStaleEdits() {
   const vkey = 'sourceVersion:' + GIG.name;
   if (localStorage.getItem(vkey) !== SOURCE_VERSION) {
@@ -4338,7 +4329,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260726a';
+const SW_BUILD = '20260727a';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
