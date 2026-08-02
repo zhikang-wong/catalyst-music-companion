@@ -2871,7 +2871,7 @@ Last Chorus
    C#     C     A#    G#
 一句话 一辈子 一生情 一杯酒
 
-Ending
+Outro
 G#  G  F  D#
 C#  C  A#  G#
 `.trim()
@@ -3402,7 +3402,7 @@ const el = {
 // ----- Edited chord chart persistence (localStorage) -----------
 // When SOURCE_VERSION changes, any localStorage edits that were baked into
 // source are cleared so the device picks up the new source instead of stale edits.
-const SOURCE_VERSION = '20260728';
+const SOURCE_VERSION = '20260729';
 (function purgeStaleEdits() {
   const vkey = 'sourceVersion:' + GIG.name;
   if (localStorage.getItem(vkey) !== SOURCE_VERSION) {
@@ -4332,7 +4332,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260728a';
+const SW_BUILD = '20260729a';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
