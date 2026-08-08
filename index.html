@@ -7,30 +7,45 @@
 <!-- PWA: run fullscreen (no Safari chrome) when added to the iPad home screen,
      and give the SW-cached offline shell a theme colour and icon. -->
 <link rel="manifest" href="./manifest.json" />
-<meta name="theme-color" content="#b45309" />
+<meta name="theme-color" content="#E6F4EC" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Catalyst" />
 <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png" />
 <link rel="icon" href="./assets/icons/icon-192.png" />
 <style>
+  /* ── Palette: "Fresh Pastel, Hard Ink" ──────────────────────────────
+     Pastels are surfaces. Ink is voice. Saturation is the accent.
+     Dominant pastel: MINT — owns all the chrome (sidebar, bars), leaving
+     the chart itself on near-white paper so the content is the brightest
+     thing on screen.
+     Signature: the now-playing line — butter field + a hard 8px ink bar.
+     All the boldness in the system is spent there; everything else is quiet.
+     Semantics, learned once: warm butter = "right now" (active line, current
+     song). Ink fill = "where you are" (active tabs). Emerald = actions &
+     structure. Blue = chords, and nothing else. */
   :root {
-    --bg: #faf9f6;
-    --panel: #ffffff;
-    --fg: #1a1d22;
-    --muted: #6b7280;
-    --accent: #d97706;
-    /* Solid fill for surfaces carrying white text (buttons, active pills).
-       --accent itself is only 3.2:1 against white — below the AA text floor —
-       so it's reserved for non-text uses (borders, slider fill, beat dots). */
-    --accent-fill: #b45309;
-    --highlight: rgba(217,119,6,0.12);
-    --chord: #1b3ee8;   /* electric blue, nods to the gig4 poster's plasma sphere; slightly higher contrast than the old value */
-    --section: #b45309;
-    --border: #e5e7eb;
-    --chip-bg: #f3f4f6;
-    --beat-idle: #d1d5db;
-    --draft: #dc2626;
+    --bg: #FBFCFB;            /* chart paper — brightest surface, because the chart is the content */
+    --panel: #E6F4EC;         /* mint-100 — all chrome bars; chrome recedes *below* the chart */
+    --fg: #14201D;            /* ink — all text and outlines, tinted toward mint, never pure black */
+    --muted: #4F5F5A;         /* ink-soft — passes AA on every surface in this palette */
+    --accent: #0A6E4A;        /* the one saturated accent: actions, structure, focus */
+    /* Kept as a separate name only so existing rules keep working — with
+       emerald it's the same value (white on it is 6.28:1, well past AA;
+       the old amber needed a darker sibling, this doesn't). */
+    --accent-fill: #0A6E4A;
+    --chord: #1B3EE8;         /* chords are the data layer — the one sanctioned second saturation */
+    --section: #14201D;       /* section headers speak in ink; their colour comes from fill + bar */
+    --now: #F5D77A;           /* butter — "right now". Deliberately deeper than a stock pastel
+                                 so it still separates from paper at a glance in a dim room. */
+    --border: rgba(20,32,29,0.14);      /* ink @14% — composites correctly on both mint and white */
+    --border-strong: rgba(20,32,29,0.28);
+    --surface-raised: #FFFFFF;          /* controls/cards sitting on the mint bars */
+    --hover: #C7E5D6;                   /* mint-300 — hover fill for buttons, tabs, sidebar rows */
+    --track: #C7E5D6;                   /* progress/slider groove */
+    --focus: #14201D;                   /* ink focus ring — visible on every surface here */
+    --beat-idle: #93C8AE;               /* mint-400 */
+    --draft: #B3261E;                   /* desaturated brick */
     --ctl-h: 44px;   /* shared height for header controls, chips, playback group — 44px touch floor */
     --r-ctl: 8px;    /* buttons, chips, inputs */
     --r-card: 12px;  /* panels, dropdowns, draft card */
@@ -66,7 +81,7 @@
   .toc-sidebar {
     grid-column: 1;
     grid-row: 1 / -1;
-    background: #f5f3f0;
+    background: #DCEFE5;   /* mint-200 */
     border-right: 1px solid var(--border);
     overflow-y: auto;
     font-size: 14px;
@@ -87,7 +102,7 @@
     margin: 0;
     font-size: 14px;
     font-weight: 700;
-    color: #1f2937;
+    color: var(--fg);
     /* DIN ships free on iPadOS — a nod to the gig4 poster's HUD/technical
        type without a webfont. Identity chrome only, never on song titles
        (DIN has no CJK coverage — several titles are Chinese). */
@@ -104,7 +119,7 @@
     display: none;
     border-radius: 6px;
   }
-  .toc-toggle:hover { background: var(--chip-bg); }
+  .toc-toggle:hover { background: var(--hover); }
 
   /* Sidebar collapse button (desktop) */
   .toc-collapse-btn {
@@ -117,7 +132,7 @@
     border-radius: 6px;
     line-height: 1;
   }
-  .toc-collapse-btn:hover { background: var(--chip-bg); color: var(--fg); }
+  .toc-collapse-btn:hover { background: var(--hover); color: var(--fg); }
 
   /* Collapsed state: grid shrinks sidebar to 0 */
   body.sidebar-collapsed {
@@ -141,16 +156,17 @@
   .toc-set-title {
     padding: 8px 14px;
     font-weight: 700;
-    color: #374151;
-    background: #ede9e4;
+    color: var(--fg);
+    background: #C7E5D6;   /* mint-300 */
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     font-family: "DIN Condensed", "DIN Alternate", -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
+  /* Ink fill = "where you are" (see also .set-tab.active) */
   .toc-set.current .toc-set-title {
-    background: var(--accent-fill);
+    background: var(--fg);
     color: #ffffff;
   }
 
@@ -165,19 +181,20 @@
     align-items: center;
     padding: 6px 20px;
     cursor: pointer;
-    color: #4b5563;
+    color: var(--muted);
     user-select: none;
     font-size: 13px;
     transition: background 0.12s var(--ease);
   }
 
   .toc-song:hover {
-    background: #e5dfd8;
+    background: var(--hover);
   }
 
+  /* Butter = "right now" — same signal as the active chart line */
   .toc-song.current {
-    background: #fef3c7;
-    color: #1f2937;
+    background: var(--now);
+    color: var(--fg);
     font-weight: 500;
   }
 
@@ -186,7 +203,7 @@
     display: flex;
     align-items: center;
     padding: 8px 16px;
-    background: #ffffff;
+    background: var(--panel);
     border-bottom: 1px solid var(--border);
     gap: 10px;
   }
@@ -214,9 +231,10 @@
     cursor: pointer;
     font-family: inherit;
   }
-  .set-tab:hover { background: var(--chip-bg); }
+  .set-tab:hover { background: var(--hover); }
+  /* Ink fill = "where you are" */
   .set-tab.active {
-    background: var(--accent-fill);
+    background: var(--fg);
     color: #ffffff;
   }
 
@@ -278,7 +296,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    background: var(--chip-bg);
+    background: var(--surface-raised);
     border: 1px solid var(--border);
     border-radius: var(--r-card);
     padding: 5px 8px;
@@ -293,7 +311,7 @@
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: var(--r-card);
-    box-shadow: 0 6px 20px rgba(26,29,34,0.14);
+    box-shadow: 0 6px 20px rgba(10,58,42,0.14);   /* mint-tinted, never neutral black */
     padding: 16px;
     display: flex;
     flex-direction: column;
@@ -336,7 +354,7 @@
     margin-left: 4px;
   }
   .meta-chip {
-    background: var(--chip-bg);
+    background: var(--surface-raised);
     padding: 3px 8px;
     border-radius: var(--r-ctl);
     font-size: 11px;
@@ -364,7 +382,7 @@
   }
 
   .btn {
-    background: #ffffff;
+    background: var(--surface-raised);
     color: var(--fg);
     border: 1px solid var(--border);
     border-radius: var(--r-ctl);
@@ -377,11 +395,13 @@
     align-items: center;
     justify-content: center;
   }
-  .btn:hover { background: var(--chip-bg); border-color: #d1d5db; }
+  .btn:hover { background: var(--hover); border-color: var(--border-strong); }
   .btn:active { transform: translateY(1px); }
   .btn.active { background: var(--accent-fill); color: #ffffff; border-color: var(--accent-fill); }
   .btn.primary { background: var(--accent-fill); color: #ffffff; border-color: var(--accent-fill); font-weight: 600; }
-  .btn:focus-visible { outline: 2px solid var(--accent-fill); outline-offset: 2px; }
+  /* Ink ring, not accent — an accent ring on the accent-filled Play button
+     would be near-invisible; ink works on every surface in this palette. */
+  .btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   .btn.icon { padding: 5px 10px; font-size: 15px; min-width: 44px; min-height: 44px; }
 
   .transpose { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
@@ -423,7 +443,7 @@
   }
   .beat.downbeat { width: 18px; height: 18px; }
   .beat.active { background: var(--accent); transform: scale(1.2); }
-  .beat.downbeat.active { box-shadow: 0 0 12px rgba(217,119,6,0.55); }
+  .beat.downbeat.active { box-shadow: 0 0 12px rgba(10,110,74,0.5); }
 
   /* Progress strip */
   .progress-strip {
@@ -436,7 +456,7 @@
   }
   .progress-track {
     flex: 1; height: 5px;
-    background: var(--chip-bg);
+    background: var(--track);
     border-radius: 3px;
     overflow: hidden;
     position: relative;
@@ -478,11 +498,12 @@
     font-family: inherit;
     color: var(--muted);
   }
-  .variant-tab:hover { background: var(--chip-bg); }
+  .variant-tab:hover { background: var(--hover); }
+  /* Ink, not blue — blue is reserved to mean "chord" and nothing else. */
   .variant-tab.active {
-    background: var(--chord);
+    background: var(--fg);
     color: #fff;
-    border-color: var(--chord);
+    border-color: var(--fg);
   }
 
   /* Chart */
@@ -503,7 +524,7 @@
     line-height: 1.5;
   }
   .chart::-webkit-scrollbar { width: 6px; }
-  .chart::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+  .chart::-webkit-scrollbar-thumb { background: #93C8AE; border-radius: 3px; }
 
   /* Edit-mode: textarea takes over the chart area */
   .chart-editor {
@@ -512,7 +533,9 @@
     border: none;
     outline: none;
     resize: none;
-    background: #fffaf0;
+    /* Blush, not cream — butter is reserved to mean "right now", so the
+       editor must not read as another yellow surface. */
+    background: #FDF4F5;
     padding: 24px 28px;
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     font-size: clamp(14px, 1.2vw + 9px, 20px);
@@ -524,7 +547,7 @@
     box-sizing: border-box;
   }
   .chart-editor:focus {
-    background: #fef3c7;
+    background: #FBEAEC;
   }
   .edit-hint {
     position: absolute;
@@ -532,7 +555,7 @@
     right: 16px;
     font-size: 11px;
     color: var(--muted);
-    background: #ffffff;
+    background: var(--surface-raised);
     padding: 4px 10px;
     border-radius: 12px;
     border: 1px solid var(--border);
@@ -557,13 +580,19 @@
     border-radius: var(--r-ctl);
     transition: background 0.18s var(--ease), box-shadow 0.18s var(--ease);
   }
-  /* Now-playing line: what sits at the read-line as the chart scrolls. Lime
-     highlighter (the gig4 poster's second colour) — also separates "which
-     line am I on" (lime) from "which section" (amber) by hue instead of
-     both living in the same yellow/orange family. */
+  /* ── SIGNATURE: the now-playing line ──────────────────────────────
+     The one place this design spends boldness. A pastel field can't carry
+     the signal on luminance alone (butter vs paper is only ~1.37:1), so the
+     work is done by the hard ink bar — 8px of the highest-contrast object on
+     screen (11.9:1 against its own field). The 1px ink ring closes the other
+     three edges, otherwise the field bleeds into the paper and reads as a
+     smear rather than a row. Warm butter against cool mint chrome also means
+     this is the only warm object in the viewport — hue separation survives a
+     dim room and an off-axis glance better than lightness alone. */
   .line.active {
-    background: rgba(163, 230, 53, 0.55);
-    box-shadow: inset 6px 0 0 #4d7c0f;
+    background: var(--now);
+    box-shadow: inset 8px 0 0 var(--fg),
+                inset 0 0 0 1px rgba(20,32,29,0.18);
     border-radius: var(--r-ctl);
   }
   /* Section/comment sizes are set in em, inheriting from .chart's font-size
@@ -580,9 +609,21 @@
     margin-bottom: 6px;
     padding: 10px 12px 10px 14px;
     border-left: 4px solid var(--accent);
-    background: rgba(217, 119, 6, 0.06);
+    background: #DCEFE5;   /* mint-200 — deliberately quieter than --now */
     border-radius: 0 var(--r-ctl) var(--r-ctl) 0;
     font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+  /* A section header can itself be the now-playing line. .line.section is
+     declared after .line.active at equal specificity, so without this it
+     keeps the mint section fill while inheriting the active ink bar — two
+     conflicting states at once. Give it the butter field, and split the bar
+     across the existing 4px border + a 4px inset so it reads as one 8px ink
+     bar without shifting the text. */
+  .line.section.active {
+    background: var(--now);
+    border-left-color: var(--fg);
+    box-shadow: inset 4px 0 0 var(--fg),
+                inset 0 0 0 1px rgba(20,32,29,0.18);
   }
   .line.comment {
     color: var(--muted);
@@ -641,7 +682,7 @@
   .draft-card p { color: var(--muted); margin: 6px 0; font-size: 14px; }
   .draft-card .ref {
     margin-top: 14px;
-    background: var(--chip-bg);
+    background: var(--surface-raised);
     padding: 10px 14px;
     border-radius: var(--r-ctl);
     font-family: ui-monospace, "SF Mono", monospace;
@@ -664,7 +705,7 @@
   /* Set complete modal */
   .modal-overlay {
     position: fixed; inset: 0;
-    background: rgba(15,20,25,0.55);
+    background: rgba(20,32,29,0.55);
     display: none;
     align-items: center;
     justify-content: center;
@@ -672,12 +713,12 @@
   }
   .modal-overlay.open { display: flex; }
   .modal-card {
-    background: #ffffff;
+    background: var(--surface-raised);
     border-radius: var(--r-sheet);
     padding: 32px 36px;
     width: min(440px, 90vw);
     text-align: center;
-    box-shadow: 0 20px 60px rgba(26,29,34,0.25);
+    box-shadow: 0 20px 60px rgba(10,58,42,0.22);
   }
   .modal-title { font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; font-family: "DIN Condensed", "DIN Alternate", -apple-system, BlinkMacSystemFont, sans-serif; }
   .modal-subtitle { font-size: 22px; font-weight: 700; margin: 10px 0 6px; }
@@ -3747,7 +3788,7 @@ function renderChart() {
       img.alt = 'Page ' + (i + 1);
       // min-height holds the page's place while it loads (avoids the chart
       // jumping/reflowing mid-scroll as each image pops in), cleared on load.
-      img.style.cssText = 'width: 100%; max-width: 900px; min-height: 400px; background: var(--chip-bg); border: 1px solid var(--border); border-radius: var(--r-ctl); display: block;';
+      img.style.cssText = 'width: 100%; max-width: 900px; min-height: 400px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-ctl); display: block;';
       img.loading = i === 0 ? 'eager' : 'lazy';
       img.decoding = 'async';
       img.addEventListener('load', () => { img.style.minHeight = ''; img.style.background = ''; }, { once: true });
@@ -4223,7 +4264,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260730a';
+const SW_BUILD = '20260730b';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
