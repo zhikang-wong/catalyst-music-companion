@@ -7,7 +7,7 @@
 <!-- PWA: run fullscreen (no Safari chrome) when added to the iPad home screen,
      and give the SW-cached offline shell a theme colour and icon. -->
 <link rel="manifest" href="./manifest.json" />
-<meta name="theme-color" content="#E6F4EC" />
+<meta name="theme-color" content="#E5EBE7" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Catalyst" />
@@ -16,36 +16,43 @@
 <style>
   /* ── Palette: "Fresh Pastel, Hard Ink" ──────────────────────────────
      Pastels are surfaces. Ink is voice. Saturation is the accent.
-     Dominant pastel: MINT — owns all the chrome (sidebar, bars), leaving
-     the chart itself on near-white paper so the content is the brightest
-     thing on screen.
-     Signature: the now-playing line — butter field + a hard 8px ink bar.
-     All the boldness in the system is spent there; everything else is quiet.
-     Semantics, learned once: warm butter = "right now" (active line, current
-     song). Ink fill = "where you are" (active tabs). Emerald = actions &
-     structure. Blue = chords, and nothing else. */
+     Dominant pastel: SAGE — owns all the chrome (sidebar, bars), leaving
+     the chart itself on warm near-white paper so the content is the
+     brightest thing on screen. Sage is the only cool swatch in this palette;
+     that cool-vs-warm split is what keeps the now-playing signal legible
+     against otherwise-soft neighbours.
+     Signature: the now-playing line — coral field + a hard 8px ink bar.
+     All the boldness in the system is spent there; coral appears nowhere
+     else in the chrome.
+     Semantics, learned once: coral = "right now" (active line, current
+     song). Ink fill = "where you are" (active tabs). Terracotta = actions &
+     structure. Petrol blue = chords, and nothing else. */
   :root {
-    --bg: #FBFCFB;            /* chart paper — brightest surface, because the chart is the content */
-    --panel: #E6F4EC;         /* mint-100 — all chrome bars; chrome recedes *below* the chart */
-    --fg: #14201D;            /* ink — all text and outlines, tinted toward mint, never pure black */
-    --muted: #4F5F5A;         /* ink-soft — passes AA on every surface in this palette */
-    --accent: #0A6E4A;        /* the one saturated accent: actions, structure, focus */
-    /* Kept as a separate name only so existing rules keep working — with
-       emerald it's the same value (white on it is 6.28:1, well past AA;
-       the old amber needed a darker sibling, this doesn't). */
-    --accent-fill: #0A6E4A;
-    --chord: #1B3EE8;         /* chords are the data layer — the one sanctioned second saturation */
-    --section: #14201D;       /* section headers speak in ink; their colour comes from fill + bar */
-    --now: #F5D77A;           /* butter — "right now". Deliberately deeper than a stock pastel
-                                 so it still separates from paper at a glance in a dim room. */
-    --border: rgba(20,32,29,0.14);      /* ink @14% — composites correctly on both mint and white */
-    --border-strong: rgba(20,32,29,0.28);
-    --surface-raised: #FFFFFF;          /* controls/cards sitting on the mint bars */
-    --hover: #C7E5D6;                   /* mint-300 — hover fill for buttons, tabs, sidebar rows */
-    --track: #C7E5D6;                   /* progress/slider groove */
-    --focus: #14201D;                   /* ink focus ring — visible on every surface here */
-    --beat-idle: #93C8AE;               /* mint-400 */
-    --draft: #B3261E;                   /* desaturated brick */
+    --bg: #FDFAF7;            /* chart paper — warm near-white; no swatch was bright enough, this is taupe driven to 98% L */
+    --panel: #E5EBE7;         /* sage-100 — all chrome bars + sidebar body; chrome recedes *below* the chart */
+    --fg: #211C18;            /* ink — taupe-tinted (the palette's neutral axis), not sage-tinted, so it doesn't cast green over the warm swatches */
+    --muted: #574E47;         /* ink-soft — passes AA on every surface in this palette */
+    --accent: #9C3F2C;        /* terracotta — coral's own hue, driven dark enough to carry white text */
+    /* Kept as a separate name only so existing rules keep working — same
+       value as --accent (white on it is 6.64:1, well past AA). */
+    --accent-fill: #9C3F2C;
+    --chord: #154A78;         /* deep petrol blue — the one sanctioned second saturation; cool, so it never reads as a coral variant */
+    --section: #211C18;       /* section headers speak in ink; their colour comes from fill + bar */
+    --now: #FEC5BB;           /* coral — "right now". The only genuinely saturated swatch in the
+                                 palette, used in exactly two places so it keeps its meaning. */
+    --set-band: #D8E2DC;      /* the sage swatch itself — sidebar set-title band */
+    --section-fill: #F5EBE0;  /* cream — section header tint, deliberately quieter than --now */
+    --editor: #EFE9E2;        /* taupe-100 — edit-mode textarea */
+    --editor-focus: #E5DCD1;  /* taupe-200 */
+    --moment: #FAE1DD;        /* peach — draft card + set-complete modal (never co-present with the chart's now-line) */
+    --border: rgba(33,28,24,0.14);      /* ink @14% — composites correctly on every surface here */
+    --border-strong: rgba(33,28,24,0.28);
+    --surface-raised: #FDFAF7;          /* paper-as-chip — controls/cards sitting on the sage bars */
+    --hover: #C4D4CA;                   /* sage-300 — hover fill for buttons, tabs, sidebar rows */
+    --track: #C4D4CA;                   /* progress/slider groove */
+    --focus: #211C18;                   /* ink focus ring — visible on every surface here */
+    --beat-idle: #58896B;               /* was 1.9:1 on the panel (invisible) in an earlier pass — this clears 3:1 */
+    --draft: #5C534C;                   /* warm grey, not red — red would collide with coral's "now" meaning; draft = incomplete, not error */
     --ctl-h: 44px;   /* shared height for header controls, chips, playback group — 44px touch floor */
     --r-ctl: 8px;    /* buttons, chips, inputs */
     --r-card: 12px;  /* panels, dropdowns, draft card */
@@ -81,7 +88,7 @@
   .toc-sidebar {
     grid-column: 1;
     grid-row: 1 / -1;
-    background: #DCEFE5;   /* mint-200 */
+    background: var(--panel);   /* sidebar and bars are one chrome plane */
     border-right: 1px solid var(--border);
     overflow-y: auto;
     font-size: 14px;
@@ -157,7 +164,7 @@
     padding: 8px 14px;
     font-weight: 700;
     color: var(--fg);
-    background: #C7E5D6;   /* mint-300 */
+    background: var(--set-band);
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -191,9 +198,13 @@
     background: var(--hover);
   }
 
-  /* Butter = "right now" — same signal as the active chart line */
+  /* Coral = "right now" — same signal as the active chart line. The field
+     alone separates from the sidebar at only ~1.25:1 (both are pale), so the
+     inset ink bar echoes the chart line's treatment and does the work the
+     field can't do by itself. */
   .toc-song.current {
     background: var(--now);
+    box-shadow: inset 3px 0 0 var(--fg);
     color: var(--fg);
     font-weight: 500;
   }
@@ -311,7 +322,7 @@
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: var(--r-card);
-    box-shadow: 0 6px 20px rgba(10,58,42,0.14);   /* mint-tinted, never neutral black */
+    box-shadow: 0 6px 20px rgba(45,33,26,0.16);   /* umber-tinted, never neutral black */
     padding: 16px;
     display: flex;
     flex-direction: column;
@@ -443,7 +454,7 @@
   }
   .beat.downbeat { width: 18px; height: 18px; }
   .beat.active { background: var(--accent); transform: scale(1.2); }
-  .beat.downbeat.active { box-shadow: 0 0 12px rgba(10,110,74,0.5); }
+  .beat.downbeat.active { box-shadow: 0 0 12px rgba(156,63,44,0.45); }
 
   /* Progress strip */
   .progress-strip {
@@ -524,7 +535,7 @@
     line-height: 1.5;
   }
   .chart::-webkit-scrollbar { width: 6px; }
-  .chart::-webkit-scrollbar-thumb { background: #93C8AE; border-radius: 3px; }
+  .chart::-webkit-scrollbar-thumb { background: #66997A; border-radius: 3px; }
 
   /* Edit-mode: textarea takes over the chart area */
   .chart-editor {
@@ -533,9 +544,9 @@
     border: none;
     outline: none;
     resize: none;
-    /* Blush, not cream — butter is reserved to mean "right now", so the
-       editor must not read as another yellow surface. */
-    background: #FDF4F5;
+    /* Taupe, not coral — coral is reserved to mean "right now", so the
+       editor must not read as another version of that surface. */
+    background: var(--editor);
     padding: 24px 28px;
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     font-size: clamp(14px, 1.2vw + 9px, 20px);
@@ -547,7 +558,7 @@
     box-sizing: border-box;
   }
   .chart-editor:focus {
-    background: #FBEAEC;
+    background: var(--editor-focus);
   }
   .edit-hint {
     position: absolute;
@@ -582,17 +593,17 @@
   }
   /* ── SIGNATURE: the now-playing line ──────────────────────────────
      The one place this design spends boldness. A pastel field can't carry
-     the signal on luminance alone (butter vs paper is only ~1.37:1), so the
+     the signal on luminance alone (coral vs paper is only ~1.45:1), so the
      work is done by the hard ink bar — 8px of the highest-contrast object on
-     screen (11.9:1 against its own field). The 1px ink ring closes the other
+     screen (11.2:1 against its own field). The 1px ink ring closes the other
      three edges, otherwise the field bleeds into the paper and reads as a
-     smear rather than a row. Warm butter against cool mint chrome also means
-     this is the only warm object in the viewport — hue separation survives a
-     dim room and an off-axis glance better than lightness alone. */
+     smear rather than a row. Coral against cool sage chrome also means this
+     is the only warm, saturated object in the viewport — hue separation
+     survives a dim room and an off-axis glance better than lightness alone. */
   .line.active {
     background: var(--now);
     box-shadow: inset 8px 0 0 var(--fg),
-                inset 0 0 0 1px rgba(20,32,29,0.18);
+                inset 0 0 0 1px rgba(33,28,24,0.22);
     border-radius: var(--r-ctl);
   }
   /* Section/comment sizes are set in em, inheriting from .chart's font-size
@@ -609,21 +620,21 @@
     margin-bottom: 6px;
     padding: 10px 12px 10px 14px;
     border-left: 4px solid var(--accent);
-    background: #DCEFE5;   /* mint-200 — deliberately quieter than --now */
+    background: var(--section-fill);   /* cream — deliberately quieter than --now */
     border-radius: 0 var(--r-ctl) var(--r-ctl) 0;
     font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   }
   /* A section header can itself be the now-playing line. .line.section is
      declared after .line.active at equal specificity, so without this it
-     keeps the mint section fill while inheriting the active ink bar — two
-     conflicting states at once. Give it the butter field, and split the bar
+     keeps the cream section fill while inheriting the active ink bar — two
+     conflicting states at once. Give it the coral field, and split the bar
      across the existing 4px border + a 4px inset so it reads as one 8px ink
      bar without shifting the text. */
   .line.section.active {
     background: var(--now);
     border-left-color: var(--fg);
     box-shadow: inset 4px 0 0 var(--fg),
-                inset 0 0 0 1px rgba(20,32,29,0.18);
+                inset 0 0 0 1px rgba(33,28,24,0.22);
   }
   .line.comment {
     color: var(--muted);
@@ -662,7 +673,7 @@
     margin: 40px auto;
     max-width: 520px;
     padding: 28px;
-    background: var(--panel);
+    background: var(--moment);
     border: 1px solid var(--border);
     border-radius: var(--r-card);
     text-align: center;
@@ -705,7 +716,7 @@
   /* Set complete modal */
   .modal-overlay {
     position: fixed; inset: 0;
-    background: rgba(20,32,29,0.55);
+    background: rgba(33,28,24,0.55);
     display: none;
     align-items: center;
     justify-content: center;
@@ -713,12 +724,12 @@
   }
   .modal-overlay.open { display: flex; }
   .modal-card {
-    background: var(--surface-raised);
+    background: var(--moment);
     border-radius: var(--r-sheet);
     padding: 32px 36px;
     width: min(440px, 90vw);
     text-align: center;
-    box-shadow: 0 20px 60px rgba(10,58,42,0.22);
+    box-shadow: 0 20px 60px rgba(45,33,26,0.24);
   }
   .modal-title { font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; font-family: "DIN Condensed", "DIN Alternate", -apple-system, BlinkMacSystemFont, sans-serif; }
   .modal-subtitle { font-size: 22px; font-weight: 700; margin: 10px 0 6px; }
@@ -4264,7 +4275,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260730b';
+const SW_BUILD = '20260730c';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
