@@ -25,7 +25,7 @@
        so it's reserved for non-text uses (borders, slider fill, beat dots). */
     --accent-fill: #b45309;
     --highlight: rgba(217,119,6,0.12);
-    --chord: #1d4ed8;
+    --chord: #1b3ee8;   /* electric blue, nods to the gig4 poster's plasma sphere; slightly higher contrast than the old value */
     --section: #b45309;
     --border: #e5e7eb;
     --chip-bg: #f3f4f6;
@@ -88,6 +88,10 @@
     font-size: 14px;
     font-weight: 700;
     color: #1f2937;
+    /* DIN ships free on iPadOS — a nod to the gig4 poster's HUD/technical
+       type without a webfont. Identity chrome only, never on song titles
+       (DIN has no CJK coverage — several titles are Chinese). */
+    font-family: "DIN Alternate", -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
   .toc-toggle {
@@ -136,12 +140,13 @@
 
   .toc-set-title {
     padding: 8px 14px;
-    font-weight: 600;
+    font-weight: 700;
     color: #374151;
     background: #ede9e4;
-    font-size: 12px;
+    font-size: 13px;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
+    font-family: "DIN Condensed", "DIN Alternate", -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
   .toc-set.current .toc-set-title {
@@ -185,7 +190,7 @@
     border-bottom: 1px solid var(--border);
     gap: 10px;
   }
-  .gig-name { font-weight: 700; font-size: 12px; color: var(--muted); flex-shrink: 0; }
+  .gig-name { font-weight: 700; font-size: 12px; color: var(--muted); flex-shrink: 0; font-family: "DIN Alternate", -apple-system, BlinkMacSystemFont, sans-serif; }
   /* When the sidebar is open it already shows the gig name in its header, so
      hide the bar's copy to give the tabs room (prevents Set 1 / Encore clipping). */
   body:not(.sidebar-collapsed) .gig-name { display: none; }
@@ -552,12 +557,13 @@
     border-radius: var(--r-ctl);
     transition: background 0.18s var(--ease), box-shadow 0.18s var(--ease);
   }
-  /* Now-playing line: what sits at the read-line as the chart scrolls.
-     Bold yellow highlighter so it's unmistakable against blue chords /
-     orange section headers. */
+  /* Now-playing line: what sits at the read-line as the chart scrolls. Lime
+     highlighter (the gig4 poster's second colour) — also separates "which
+     line am I on" (lime) from "which section" (amber) by hue instead of
+     both living in the same yellow/orange family. */
   .line.active {
-    background: rgba(250, 204, 21, 0.55);
-    box-shadow: inset 6px 0 0 #f59e0b;
+    background: rgba(163, 230, 53, 0.55);
+    box-shadow: inset 6px 0 0 #4d7c0f;
     border-radius: var(--r-ctl);
   }
   /* Section/comment sizes are set in em, inheriting from .chart's font-size
@@ -651,6 +657,9 @@
   }
   /* Slider fills available space and shrinks when the sidebar narrows the row. */
   .speed-row input[type=range] { flex: 1 1 240px; width: auto; min-width: 0; max-width: 820px; height: 22px; accent-color: var(--accent); }
+  /* Fixed-width, tabular-nums readout so the label doesn't jitter/reflow (and
+     shift the slider track under your thumb) as it updates live while dragging. */
+  #speedLabel { font-variant-numeric: tabular-nums; display: inline-block; min-width: 5ch; text-align: right; flex-shrink: 0; }
 
   /* Set complete modal */
   .modal-overlay {
@@ -670,7 +679,7 @@
     text-align: center;
     box-shadow: 0 20px 60px rgba(26,29,34,0.25);
   }
-  .modal-title { font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; }
+  .modal-title { font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; font-family: "DIN Condensed", "DIN Alternate", -apple-system, BlinkMacSystemFont, sans-serif; }
   .modal-subtitle { font-size: 22px; font-weight: 700; margin: 10px 0 6px; }
   .modal-meta { color: var(--muted); font-size: 14px; margin-bottom: 22px; }
   .modal-buttons { display: flex; gap: 10px; justify-content: center; }
@@ -4214,7 +4223,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260729c';
+const SW_BUILD = '20260730a';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
