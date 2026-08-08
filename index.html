@@ -50,7 +50,15 @@
     display: grid;
     grid-template-columns: 280px minmax(0, 1fr);
     grid-template-rows: auto auto auto 1fr auto;
+    /* 100vh is the LARGEST possible viewport (as if Safari's address bar were
+       hidden). When it's actually showing, a fixed 100vh body is taller than
+       the visible area, and since this layout is fixed-height + internal
+       scroll (not page-level scroll), the overflow pushes the top bar above
+       the visible viewport with no way to scroll back up to it. 100dvh tracks
+       the real, current visible height instead. Keep 100vh first as a
+       fallback for browsers predating dvh support (iOS < 15.4). */
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
   }
 
@@ -683,6 +691,7 @@
       left: 0;
       top: 0;
       height: 100vh;
+      height: 100dvh;
       width: 280px;
       z-index: var(--z-drawer);
       transform: translateX(-100%);
@@ -4205,7 +4214,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260729b';
+const SW_BUILD = '20260729c';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
