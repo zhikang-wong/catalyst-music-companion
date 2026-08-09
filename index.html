@@ -7,52 +7,61 @@
 <!-- PWA: run fullscreen (no Safari chrome) when added to the iPad home screen,
      and give the SW-cached offline shell a theme colour and icon. -->
 <link rel="manifest" href="./manifest.json" />
-<meta name="theme-color" content="#E5EBE7" />
+<meta name="theme-color" content="#EBE9E1" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Catalyst" />
 <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png" />
 <link rel="icon" href="./assets/icons/icon-192.png" />
 <style>
-  /* ── Palette: "Fresh Pastel, Hard Ink" ──────────────────────────────
-     Pastels are surfaces. Ink is voice. Saturation is the accent.
-     Dominant pastel: SAGE — owns all the chrome (sidebar, bars), leaving
-     the chart itself on warm near-white paper so the content is the
-     brightest thing on screen. Sage is the only cool swatch in this palette;
-     that cool-vs-warm split is what keeps the now-playing signal legible
-     against otherwise-soft neighbours.
-     Signature: the now-playing line — coral field + a hard 8px ink bar.
-     All the boldness in the system is spent there; coral appears nowhere
-     else in the chrome.
-     Semantics, learned once: coral = "right now" (active line, current
-     song). Ink fill = "where you are" (active tabs). Terracotta = actions &
-     structure. Petrol blue = chords, and nothing else. */
+  /* ── Palette: loket.design cream/pink/orange ─────────────────────────
+     Loket's own move is saturated burnt-orange AS body text — on this app
+     that's a real legibility loss (orange lyric text inside the now-playing
+     field computes to ~2.2:1, read at ~1m in a dim room with your hands busy).
+     So the reconciliation: orange owns the FRAME, ink owns the SCORE.
+     Orange (darkened to --accent-fill) is the chrome's typographic voice —
+     wordmark, gig name, set titles, modal title all set in it — so the app
+     still reads as "orange-branded" the instant you look at the chrome. But
+     lyrics, chords and section headers stay ink, because that's the 90% of
+     the screen you're actually reading mid-song.
+     Dominant surface: CREAM — all chrome, verbatim from the reference's page
+     background. Chart itself sits on paper one step brighter.
+     Signature: the now-playing line — bubblegum pink field + a hard 8px ink
+     bar. Pink is the only non-warm-neutral hue in the palette, so it's the
+     one thing that reads as "different" at a glance; used in exactly two
+     places (chart line, sidebar current song) so it keeps that meaning.
+     Berry was cut — it passed no role cleanly and would have diluted either
+     pink or orange. Not every reference swatch earns a token.
+     Semantics, learned once: pink = "right now". Ink fill = "where you are".
+     Orange (full strength, non-text) = actions & structure. Petrol blue =
+     chords, and nothing else. Mustard = draft/incomplete, not an error. */
   :root {
-    --bg: #FDFAF7;            /* chart paper — warm near-white; no swatch was bright enough, this is taupe driven to 98% L */
-    --panel: #E5EBE7;         /* sage-100 — all chrome bars + sidebar body; chrome recedes *below* the chart */
-    --fg: #211C18;            /* ink — taupe-tinted (the palette's neutral axis), not sage-tinted, so it doesn't cast green over the warm swatches */
-    --muted: #574E47;         /* ink-soft — passes AA on every surface in this palette */
-    --accent: #9C3F2C;        /* terracotta — coral's own hue, driven dark enough to carry white text */
-    /* Kept as a separate name only so existing rules keep working — same
-       value as --accent (white on it is 6.64:1, well past AA). */
-    --accent-fill: #9C3F2C;
-    --chord: #154A78;         /* deep petrol blue — the one sanctioned second saturation; cool, so it never reads as a coral variant */
-    --section: #211C18;       /* section headers speak in ink; their colour comes from fill + bar */
-    --now: #FEC5BB;           /* coral — "right now". The only genuinely saturated swatch in the
-                                 palette, used in exactly two places so it keeps its meaning. */
-    --set-band: #D8E2DC;      /* the sage swatch itself — sidebar set-title band */
-    --section-fill: #F5EBE0;  /* cream — section header tint, deliberately quieter than --now */
-    --editor: #EFE9E2;        /* taupe-100 — edit-mode textarea */
-    --editor-focus: #E5DCD1;  /* taupe-200 */
-    --moment: #FAE1DD;        /* peach — draft card + set-complete modal (never co-present with the chart's now-line) */
-    --border: rgba(33,28,24,0.14);      /* ink @14% — composites correctly on every surface here */
-    --border-strong: rgba(33,28,24,0.28);
-    --surface-raised: #FDFAF7;          /* paper-as-chip — controls/cards sitting on the sage bars */
-    --hover: #C4D4CA;                   /* sage-300 — hover fill for buttons, tabs, sidebar rows */
-    --track: #C4D4CA;                   /* progress/slider groove */
-    --focus: #211C18;                   /* ink focus ring — visible on every surface here */
-    --beat-idle: #58896B;               /* was 1.9:1 on the panel (invisible) in an earlier pass — this clears 3:1 */
-    --draft: #5C534C;                   /* warm grey, not red — red would collide with coral's "now" meaning; draft = incomplete, not error */
+    --bg: #FBF9F3;            /* chart paper — cream driven to ~97% L; chart stays the brightest surface */
+    --panel: #EBE9E1;         /* the cream swatch itself, verbatim — all chrome bars + sidebar body */
+    --fg: #231610;            /* ink — orange-tinted (warm-black, never neutral grey, never pure #000) */
+    --muted: #4F423A;         /* ink-soft — passes AA on every surface in this palette, incl. inside the pink field */
+    --accent: #E43D12;        /* burnt orange, full strength — NON-TEXT + display type ≥24px only (4.01:1 vs paper, clears the 3:1 floor, not the 4.5:1 text floor) */
+    /* Darkened sibling that both (a) carries white text and (b) is legible
+       as small chrome type — this is the "orange as voice" register: the
+       wordmark, gig name, set titles, modal title are set in this, not --fg. */
+    --accent-fill: #B92E08;
+    --chord: #123F63;         /* deep petrol blue — the one sanctioned second saturation; max hue-distance from every warm swatch */
+    --section: #231610;       /* section headers speak in ink; a header can itself become the now-line, where orange text would drop to ~2.2:1 */
+    --now: #FFA2B6;           /* bubblegum pink — "right now". Chart active line + sidebar current song, nowhere else. */
+    --set-band: #E1DED3;      /* cream, one step down — sidebar set-title band */
+    --section-fill: #F8EFD8;  /* pale mustard — section header tint, deliberately quieter than --now */
+    --editor: #F0EDE4;        /* edit-mode textarea */
+    --editor-focus: #E6E2D6;
+    --moment: #F5F1E6;        /* neutral warm cream — draft card + set-complete modal (pink is spoken for by "now") */
+    --border: rgba(35,22,16,0.14);      /* ink @14% — composites correctly on every surface here */
+    --border-strong: rgba(35,22,16,0.28);
+    --surface-raised: #FBF9F3;          /* = paper — controls/cards sitting on the cream bars */
+    --hover: #DBD7C9;                   /* hover fill for buttons, tabs, sidebar rows */
+    --track: #D6D1C0;                   /* split from --hover: --accent-fill on shared --hover only cleared 2.93:1 (fails); this clears 3.97:1 */
+    --focus: #231610;                   /* ink focus ring — visible on every surface here */
+    --beat-idle: #8A8175;               /* warm grey, 3.15:1 on chrome */
+    --draft: #EFB11D;                   /* mustard, full strength. Structurally can't be a border/indicator (its luminance can't reach 3:1 against
+                                            anything lighter than itself) so it's used as a fill with ink text (9.20:1), not as accent-style outline. */
     --ctl-h: 44px;   /* shared height for header controls, chips, playback group — 44px touch floor */
     --r-ctl: 8px;    /* buttons, chips, inputs */
     --r-card: 12px;  /* panels, dropdowns, draft card */
@@ -109,7 +118,10 @@
     margin: 0;
     font-size: 14px;
     font-weight: 700;
-    color: var(--fg);
+    /* --accent-fill, not --fg — this is the "orange as chrome voice" register:
+       identity/structural type is set in orange (5.00:1 on this chrome),
+       while lyrics/chords/section text everywhere else stays ink. */
+    color: var(--accent-fill);
     /* DIN ships free on iPadOS — a nod to the gig4 poster's HUD/technical
        type without a webfont. Identity chrome only, never on song titles
        (DIN has no CJK coverage — several titles are Chinese). */
@@ -163,7 +175,7 @@
   .toc-set-title {
     padding: 8px 14px;
     font-weight: 700;
-    color: var(--fg);
+    color: var(--accent-fill);   /* 4.51:1 on --set-band — the tightest pairing in the system; don't lighten --set-band further */
     background: var(--set-band);
     font-size: 13px;
     text-transform: uppercase;
@@ -218,7 +230,7 @@
     border-bottom: 1px solid var(--border);
     gap: 10px;
   }
-  .gig-name { font-weight: 700; font-size: 12px; color: var(--muted); flex-shrink: 0; font-family: "DIN Alternate", -apple-system, BlinkMacSystemFont, sans-serif; }
+  .gig-name { font-weight: 700; font-size: 12px; color: var(--accent-fill); flex-shrink: 0; font-family: "DIN Alternate", -apple-system, BlinkMacSystemFont, sans-serif; }
   /* When the sidebar is open it already shows the gig name in its header, so
      hide the bar's copy to give the tabs room (prevents Set 1 / Encore clipping). */
   body:not(.sidebar-collapsed) .gig-name { display: none; }
@@ -322,7 +334,7 @@
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: var(--r-card);
-    box-shadow: 0 6px 20px rgba(45,33,26,0.16);   /* umber-tinted, never neutral black */
+    box-shadow: 0 6px 20px rgba(35,22,16,0.16);   /* umber-tinted, never neutral black */
     padding: 16px;
     display: flex;
     flex-direction: column;
@@ -356,7 +368,7 @@
   .song-artist { color: var(--muted); font-size: 12px; white-space: nowrap; }
   .draft-badge {
     background: var(--draft);
-    color: #ffffff;
+    color: var(--fg);   /* mustard can't carry white text (1.91:1) — ink is 9.20:1 */
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -446,15 +458,24 @@
     border: 1px solid var(--border);
     flex-shrink: 0;
   }
+  /* Idle/active is hollow-vs-filled, not just a colour swap — active orange
+     vs idle warm-grey is only 1.10:1 apart in luminance, so on colour alone
+     the beat would barely read as "changed" at a glance. Shape carries the
+     state instead: idle is an outlined ring, active is a solid orange disc. */
   .beat {
     width: 14px; height: 14px;
     border-radius: 50%;
-    background: var(--beat-idle);
+    background: transparent;
+    box-shadow: inset 0 0 0 2px var(--beat-idle);
     transition: background 80ms ease, transform 80ms ease, box-shadow 80ms ease;
   }
   .beat.downbeat { width: 18px; height: 18px; }
-  .beat.active { background: var(--accent); transform: scale(1.2); }
-  .beat.downbeat.active { box-shadow: 0 0 12px rgba(156,63,44,0.45); }
+  .beat.active {
+    background: var(--accent);
+    box-shadow: 0 0 0 3px rgba(228,61,18,0.28);
+    transform: scale(1.2);
+  }
+  .beat.downbeat.active { box-shadow: 0 0 0 3px rgba(228,61,18,0.28), 0 0 12px rgba(228,61,18,0.42); }
 
   /* Progress strip */
   .progress-strip {
@@ -535,7 +556,7 @@
     line-height: 1.5;
   }
   .chart::-webkit-scrollbar { width: 6px; }
-  .chart::-webkit-scrollbar-thumb { background: #66997A; border-radius: 3px; }
+  .chart::-webkit-scrollbar-thumb { background: #938C7F; border-radius: 3px; }   /* 3.17:1 on paper — the design-lead spec's value tested at 1.95:1 and failed the 3:1 floor */
 
   /* Edit-mode: textarea takes over the chart area */
   .chart-editor {
@@ -565,7 +586,7 @@
     bottom: 8px;
     right: 16px;
     font-size: 11px;
-    color: var(--muted);
+    color: var(--accent-fill);   /* 5.77:1 on paper */
     background: var(--surface-raised);
     padding: 4px 10px;
     border-radius: 12px;
@@ -593,17 +614,19 @@
   }
   /* ── SIGNATURE: the now-playing line ──────────────────────────────
      The one place this design spends boldness. A pastel field can't carry
-     the signal on luminance alone (coral vs paper is only ~1.45:1), so the
-     work is done by the hard ink bar — 8px of the highest-contrast object on
-     screen (11.2:1 against its own field). The 1px ink ring closes the other
-     three edges, otherwise the field bleeds into the paper and reads as a
-     smear rather than a row. Coral against cool sage chrome also means this
-     is the only warm, saturated object in the viewport — hue separation
-     survives a dim room and an off-axis glance better than lightness alone. */
+     the signal on luminance alone, so the work is done by the hard ink bar
+     — 9.3:1 against its own field, still the highest-contrast object on
+     screen. The 1px ink ring closes the other three edges, otherwise the
+     field bleeds into the paper and reads as a smear rather than a row (ring
+     alpha 0.28, not the 0.22 used on the previous coral field — pink is
+     lighter, so it needs the stronger ring to clear the 3:1 non-text floor).
+     Pink is the only non-warm-neutral hue in this palette, so it's the one
+     thing that reads as "different" at a glance — hue separation survives a
+     dim room and an off-axis glance better than lightness alone. */
   .line.active {
     background: var(--now);
     box-shadow: inset 8px 0 0 var(--fg),
-                inset 0 0 0 1px rgba(33,28,24,0.22);
+                inset 0 0 0 1px rgba(35,22,16,0.28);
     border-radius: var(--r-ctl);
   }
   /* Section/comment sizes are set in em, inheriting from .chart's font-size
@@ -620,21 +643,22 @@
     margin-bottom: 6px;
     padding: 10px 12px 10px 14px;
     border-left: 4px solid var(--accent);
-    background: var(--section-fill);   /* cream — deliberately quieter than --now */
+    background: var(--section-fill);   /* pale mustard — deliberately quieter than --now */
     border-radius: 0 var(--r-ctl) var(--r-ctl) 0;
     font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   }
   /* A section header can itself be the now-playing line. .line.section is
      declared after .line.active at equal specificity, so without this it
-     keeps the cream section fill while inheriting the active ink bar — two
-     conflicting states at once. Give it the coral field, and split the bar
+     keeps the mustard section fill while inheriting the active ink bar — two
+     conflicting states at once. Give it the pink field, and split the bar
      across the existing 4px border + a 4px inset so it reads as one 8px ink
-     bar without shifting the text. */
+     bar without shifting the text. Section text stays ink, never orange —
+     orange text inside this pink field would drop to ~2.2:1. */
   .line.section.active {
     background: var(--now);
     border-left-color: var(--fg);
     box-shadow: inset 4px 0 0 var(--fg),
-                inset 0 0 0 1px rgba(33,28,24,0.22);
+                inset 0 0 0 1px rgba(35,22,16,0.28);
   }
   .line.comment {
     color: var(--muted);
@@ -681,7 +705,7 @@
   }
   .draft-card .label {
     background: var(--draft);
-    color: #ffffff;
+    color: var(--fg);   /* mustard can't carry white text (1.91:1) — ink is 9.20:1 */
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.1em;
@@ -716,7 +740,7 @@
   /* Set complete modal */
   .modal-overlay {
     position: fixed; inset: 0;
-    background: rgba(33,28,24,0.55);
+    background: rgba(35,22,16,0.55);
     display: none;
     align-items: center;
     justify-content: center;
@@ -729,9 +753,12 @@
     padding: 32px 36px;
     width: min(440px, 90vw);
     text-align: center;
-    box-shadow: 0 20px 60px rgba(45,33,26,0.24);
+    box-shadow: 0 20px 60px rgba(35,22,16,0.24);
   }
-  .modal-title { font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; font-family: "DIN Condensed", "DIN Alternate", -apple-system, BlinkMacSystemFont, sans-serif; }
+  /* --accent-fill, not --accent — full-strength orange is only 4.01:1 on
+     paper (fails 4.5:1 AA at 13px); the darkened sibling is 5.38:1 on this
+     card's --moment background. This is the "orange as chrome voice" register. */
+  .modal-title { font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: var(--accent-fill); text-transform: uppercase; font-family: "DIN Condensed", "DIN Alternate", -apple-system, BlinkMacSystemFont, sans-serif; }
   .modal-subtitle { font-size: 22px; font-weight: 700; margin: 10px 0 6px; }
   .modal-meta { color: var(--muted); font-size: 14px; margin-bottom: 22px; }
   .modal-buttons { display: flex; gap: 10px; justify-content: center; }
@@ -4275,7 +4302,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260730c';
+const SW_BUILD = '20260731a';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
