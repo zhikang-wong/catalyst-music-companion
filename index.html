@@ -14,45 +14,44 @@
 <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png" />
 <link rel="icon" href="./assets/icons/icon-192.png" />
 <style>
-  /* ── Palette: loket.design cream/pink/orange ─────────────────────────
-     Loket's own move is saturated burnt-orange AS body text — on this app
-     that's a real legibility loss (orange lyric text inside the now-playing
-     field computes to ~2.2:1, read at ~1m in a dim room with your hands busy).
-     So the reconciliation: orange owns the FRAME, ink owns the SCORE.
-     Orange (darkened to --accent-fill) is the chrome's typographic voice —
-     wordmark, gig name, set titles, modal title all set in it — so the app
-     still reads as "orange-branded" the instant you look at the chrome. But
-     lyrics, chords and section headers stay ink, because that's the 90% of
-     the screen you're actually reading mid-song.
+  /* ── Palette: loket.design cream/gold/orange/pink ────────────────────
+     Orange owns the frame; pink owns the chords; ink owns the words.
+     Gold, and only gold, means right now.
+     Two oranges, separated by surface zone (not by eyeballing): --accent
+     (full strength, non-text/display ≥24px) and --accent-fill (darkened,
+     the chrome's typographic voice — wordmark, gig name, set titles, modal
+     title). Both are chrome-only, which is what lets --chord own a colour
+     outright without any "which one is this" ambiguity.
      Dominant surface: CREAM — all chrome, verbatim from the reference's page
      background. Chart itself sits on paper one step brighter.
-     Signature: the now-playing line — bubblegum pink field + a hard 8px ink
-     bar. Pink is the only non-warm-neutral hue in the palette, so it's the
-     one thing that reads as "different" at a glance; used in exactly two
-     places (chart line, sidebar current song) so it keeps that meaning.
-     Berry was cut — it passed no role cleanly and would have diluted either
-     pink or orange. Not every reference swatch earns a token.
-     Semantics, learned once: pink = "right now". Ink fill = "where you are".
-     Orange (full strength, non-text) = actions & structure. Petrol blue =
-     chords, and nothing else. Mustard = draft/incomplete, not an error. */
+     Signature: the now-playing line — bright gold field + a hard 8px ink bar.
+     Lighter *and* fully saturated: at a fixed luminance, chroma is free, so
+     pushing to the gamut edge buys apparent brightness at almost no cost in
+     real separation (ΔE2000 vs paper 29.7, against the darker marigold's
+     30.2 — while the WCAG ratio drops 1.98 → 1.67). That 16% of luminance
+     separation is bought back by the ring (alpha 0.38, not 0.28) and the
+     4px sidebar bar. Used in exactly two places (chart active line, sidebar
+     current song) so it keeps that one meaning. */
   :root {
     --bg: #FBF9F3;            /* chart paper — cream driven to ~97% L; chart stays the brightest surface */
     --panel: #EBE9E1;         /* the cream swatch itself, verbatim — all chrome bars + sidebar body */
     --fg: #231610;            /* ink — orange-tinted (warm-black, never neutral grey, never pure #000) */
-    --muted: #4F423A;         /* ink-soft — passes AA on every surface in this palette, incl. inside the pink field */
+    --muted: #4F423A;         /* ink-soft — passes AA on every surface in this palette, incl. inside the now field */
     --accent: #E43D12;        /* burnt orange, full strength — NON-TEXT + display type ≥24px only (4.01:1 vs paper, clears the 3:1 floor, not the 4.5:1 text floor) */
     /* Darkened sibling that both (a) carries white text and (b) is legible
        as small chrome type — this is the "orange as voice" register: the
-       wordmark, gig name, set titles, modal title are set in this, not --fg. */
+       wordmark, gig name, set titles, modal title are set in this, not --fg.
+       Chrome-only — never enters the chart, so it never has to survive
+       sitting inside the now-playing field. */
     --accent-fill: #B92E08;
-    --chord: #123F63;         /* deep petrol blue — the one sanctioned second saturation; max hue-distance from every warm swatch */
-    --section: #231610;       /* section headers speak in ink; a header can itself become the now-line, where orange text would drop to ~2.2:1 */
-    --now: #FFA2B6;           /* bubblegum pink — "right now". Chart active line + sidebar current song, nowhere else. */
+    --chord: #CC0066;         /* hot pink, chart-only text — 5.31:1 on paper; 3.18:1 inside the gold now-field, which is the large-text floor, and legal only because FONT_SIZE_MIN keeps chords ≥19px bold (see FONT_SIZE_MIN) */
+    --section: #231610;       /* section headers speak in ink; a header can itself become the now-line, where pink text would drop well below AA */
+    --now: #F4BB00;           /* bright gold — "right now". Chart active line + sidebar current song, nowhere else. */
     --set-band: #E1DED3;      /* cream, one step down — sidebar set-title band */
-    --section-fill: #F8EFD8;  /* pale mustard — section header tint, deliberately quieter than --now */
+    --section-fill: #F4EFE2;  /* warm cream, not pale yellow — deliberately desaturated so it doesn't read as the same family as --now */
     --editor: #F0EDE4;        /* edit-mode textarea */
     --editor-focus: #E6E2D6;
-    --moment: #F5F1E6;        /* neutral warm cream — draft card + set-complete modal (pink is spoken for by "now") */
+    --moment: #F5F1E6;        /* neutral warm cream — draft card + set-complete modal */
     --border: rgba(35,22,16,0.14);      /* ink @14% — composites correctly on every surface here */
     --border-strong: rgba(35,22,16,0.28);
     --surface-raised: #FBF9F3;          /* = paper — controls/cards sitting on the cream bars */
@@ -60,8 +59,6 @@
     --track: #D6D1C0;                   /* split from --hover: --accent-fill on shared --hover only cleared 2.93:1 (fails); this clears 3.97:1 */
     --focus: #231610;                   /* ink focus ring — visible on every surface here */
     --beat-idle: #8A8175;               /* warm grey, 3.15:1 on chrome */
-    --draft: #EFB11D;                   /* mustard, full strength. Structurally can't be a border/indicator (its luminance can't reach 3:1 against
-                                            anything lighter than itself) so it's used as a fill with ink text (9.20:1), not as accent-style outline. */
     --ctl-h: 44px;   /* shared height for header controls, chips, playback group — 44px touch floor */
     --r-ctl: 8px;    /* buttons, chips, inputs */
     --r-card: 12px;  /* panels, dropdowns, draft card */
@@ -210,13 +207,13 @@
     background: var(--hover);
   }
 
-  /* Coral = "right now" — same signal as the active chart line. The field
-     alone separates from the sidebar at only ~1.25:1 (both are pale), so the
-     inset ink bar echoes the chart line's treatment and does the work the
-     field can't do by itself. */
+  /* Gold = "right now" — same signal as the active chart line. The field
+     alone separates from the sidebar at only ~1.45:1 (the lighter gold gave
+     up separation to gain brightness), so the inset ink bar is 4px, not 3px:
+     it now carries more of this signal than it used to. */
   .toc-song.current {
     background: var(--now);
-    box-shadow: inset 3px 0 0 var(--fg);
+    box-shadow: inset 4px 0 0 var(--fg);
     color: var(--fg);
     font-weight: 500;
   }
@@ -366,9 +363,14 @@
   .song-meta { display: flex; align-items: baseline; gap: 6px; min-width: 0; overflow: hidden; }
   .song-title { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .song-artist { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  /* Outline chip, not a coloured fill — a mustard/gold fill would sit within
+     a couple of degrees of hue from --now and mean "incomplete chart" and
+     "right now" in the same breath. A draft flag is metadata, not a state;
+     it doesn't need a hue. */
   .draft-badge {
-    background: var(--draft);
-    color: var(--fg);   /* mustard can't carry white text (1.91:1) — ink is 9.20:1 */
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--muted);   /* solid, not the translucent --border-strong — that only reaches 1.81:1 on chrome, well under the 3:1 UI floor */
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -531,7 +533,10 @@
     color: var(--muted);
   }
   .variant-tab:hover { background: var(--hover); }
-  /* Ink, not blue — blue is reserved to mean "chord" and nothing else. */
+  /* Ink, not --chord's pink — pink means "chord" and nothing else. Now that
+     the chord colour is a family of its own (rather than a third orange),
+     this rule is easy to hold: orange never leaves the chrome, pink never
+     leaves the chart. */
   .variant-tab.active {
     background: var(--fg);
     color: #fff;
@@ -565,8 +570,8 @@
     border: none;
     outline: none;
     resize: none;
-    /* Taupe, not coral — coral is reserved to mean "right now", so the
-       editor must not read as another version of that surface. */
+    /* A quiet neutral, not gold — gold is reserved to mean "right now", so
+       the editor must not read as another version of that surface. */
     background: var(--editor);
     padding: 24px 28px;
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -613,20 +618,23 @@
     transition: background 0.18s var(--ease), box-shadow 0.18s var(--ease);
   }
   /* ── SIGNATURE: the now-playing line ──────────────────────────────
-     The one place this design spends boldness. A pastel field can't carry
-     the signal on luminance alone, so the work is done by the hard ink bar
-     — 9.3:1 against its own field, still the highest-contrast object on
-     screen. The 1px ink ring closes the other three edges, otherwise the
-     field bleeds into the paper and reads as a smear rather than a row (ring
-     alpha 0.28, not the 0.22 used on the previous coral field — pink is
-     lighter, so it needs the stronger ring to clear the 3:1 non-text floor).
-     Pink is the only non-warm-neutral hue in this palette, so it's the one
-     thing that reads as "different" at a glance — hue separation survives a
-     dim room and an off-axis glance better than lightness alone. */
+     The one place this design spends boldness. Bright gold, pushed to the
+     sRGB gamut edge: at a fixed luminance chroma costs nothing, so max
+     saturation buys apparent brightness almost for free. Against paper the
+     WCAG ratio is 1.67:1 but the perceptual difference (ΔE2000 29.7) is
+     level with the darker marigold it replaces — the field reads brighter
+     without actually separating less.
+     The hard ink bar does the heavy lifting: 10:1 against its own field,
+     the highest-contrast object on screen. The 1px ink ring closes the
+     other three edges, otherwise the field bleeds into the paper and reads
+     as a smear rather than a row — its alpha is 0.38, NOT the 0.28 used on
+     the earlier darker fields, because a lighter field drops the composited
+     ring below the 3:1 non-text floor (0.28 here computes 2.90:1). If the
+     field is ever lightened further, recompute the ring before shipping. */
   .line.active {
     background: var(--now);
     box-shadow: inset 8px 0 0 var(--fg),
-                inset 0 0 0 1px rgba(35,22,16,0.28);
+                inset 0 0 0 1px rgba(35,22,16,0.38);
     border-radius: var(--r-ctl);
   }
   /* Section/comment sizes are set in em, inheriting from .chart's font-size
@@ -642,23 +650,25 @@
     margin-top: 32px;
     margin-bottom: 6px;
     padding: 10px 12px 10px 14px;
-    border-left: 4px solid var(--accent);
-    background: var(--section-fill);   /* pale mustard — deliberately quieter than --now */
+    /* Ink, not --accent — pink means "chord" and orange is chrome-only, so
+       the section rule speaking in ink keeps every chart colour one-to-one
+       with one meaning. */
+    border-left: 4px solid var(--fg);
+    background: var(--section-fill);   /* warm cream — deliberately quieter than --now, and desaturated so it doesn't read as the same family */
     border-radius: 0 var(--r-ctl) var(--r-ctl) 0;
     font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   }
   /* A section header can itself be the now-playing line. .line.section is
      declared after .line.active at equal specificity, so without this it
-     keeps the mustard section fill while inheriting the active ink bar — two
-     conflicting states at once. Give it the pink field, and split the bar
-     across the existing 4px border + a 4px inset so it reads as one 8px ink
-     bar without shifting the text. Section text stays ink, never orange —
-     orange text inside this pink field would drop to ~2.2:1. */
+     keeps the section fill while inheriting the active ink bar — two
+     conflicting states at once. Give it the gold field, and split the bar
+     across the existing 4px border + a 4px inset so it reads as one 8px
+     ink bar without shifting the text. Section text stays ink, never
+     pink — pink text inside this field would drop well below AA. */
   .line.section.active {
     background: var(--now);
-    border-left-color: var(--fg);
     box-shadow: inset 4px 0 0 var(--fg),
-                inset 0 0 0 1px rgba(35,22,16,0.28);
+                inset 0 0 0 1px rgba(35,22,16,0.38);
   }
   .line.comment {
     color: var(--muted);
@@ -704,8 +714,9 @@
     font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   }
   .draft-card .label {
-    background: var(--draft);
-    color: var(--fg);   /* mustard can't carry white text (1.91:1) — ink is 9.20:1 */
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--muted);   /* solid, not the translucent --border-strong — that only reaches 1.81:1 on chrome, well under the 3:1 UI floor */
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.1em;
@@ -3419,9 +3430,16 @@ const SOURCE_VERSION = '20260729';
 
 // ----- Font size adjustment (persisted per device, not per song) -----------
 const FONT_SIZE_KEY = 'chartFontOffset';
-const FONT_SIZE_MIN = -4;
+// Load-bearing, not arbitrary: --chord (hot pink) sits at 3.18:1 against the
+// gold now-playing field, which is the WCAG *large-text* floor (3:1) — legal
+// only while chords render ≥18.66px bold. -1 keeps the floor at 19px. Going
+// back to -4 would put chords at 16px inside that field, a straight AA fail.
+const FONT_SIZE_MIN = -1;
 const FONT_SIZE_MAX = 8;
-let fontSizeOffset = parseInt(localStorage.getItem(FONT_SIZE_KEY) || '0', 10);
+// Clamped on read, not just on click — a device that stored -4 under the old
+// wider range would otherwise reload straight back into the failing size.
+let fontSizeOffset = Math.min(FONT_SIZE_MAX, Math.max(FONT_SIZE_MIN,
+  parseInt(localStorage.getItem(FONT_SIZE_KEY) || '0', 10) || 0));
 
 function applyFontSize() {
   // Base clamp is clamp(20px, 2.2vw+8px, 30px) — sized to be glanceable from a
@@ -3655,6 +3673,7 @@ function loadSong(setIdx, songIdx) {
   renderVariantBar();
   renderChart();
   renderTOC();
+  applyPlayheadOffset();   // before calibration — it changes scrollHeight
   el.chart.scrollTop = 0;
   state.virtualScroll = 0;
 
@@ -3668,8 +3687,12 @@ function loadSong(setIdx, songIdx) {
     applySliderSpeed();
   }
   // One-shot paint of the read-line highlight + progress (the rAF loop only
-  // runs while playing, so nothing else refreshes these until then).
-  requestAnimationFrame(() => { updateHighlight(); updateProgress(); });
+  // runs while playing, so nothing else refreshes these until then). Re-apply
+  // the read-line offset here too: the synchronous call above can run before
+  // the grid has finished resizing (e.g. the variant bar appearing or
+  // disappearing between songs changes the chart's height), which would leave
+  // the padding computed against a stale height.
+  requestAnimationFrame(() => { applyPlayheadOffsetSettled(); updateHighlight(); updateProgress(); });
 }
 
 // Derive the per-song auto-fit speed once layout has settled. Retries across
@@ -3677,6 +3700,7 @@ function loadSong(setIdx, songIdx) {
 // can lag a frame or two), so calibration never silently falls back.
 function calibrateScrollBase(song, tries) {
   tries = tries || 0;
+  applyPlayheadOffset();   // padding is part of scrollHeight — set it before measuring
   const scrollable = el.chart.scrollHeight - el.chart.clientHeight;
   if (scrollable > 0) {
     state.autoFitSpeed = scrollable / song.durationSec;
@@ -3969,16 +3993,46 @@ function escapeHtml(s) {
 }
 
 // ----- Highlight & scroll -----------------------------------
+// Where the read-line sits, as a fraction of the chart's visible height.
+// Deliberately near the middle rather than near the top: while auto-scrolling
+// you need to see what's coming AND what just passed. With the line pinned
+// high, everything you've just played is immediately off-screen and the song
+// appears to race past you.
+const PLAYHEAD_POS = 0.42;
+
+// The first lines of a song start at the top of the chart, so with the
+// read-line at 42% they could never reach it — the opening lines would never
+// highlight. Pad the top by exactly the read-line offset so line 1 begins
+// sitting on the read-line, and every later line scrolls up through it.
+function applyPlayheadOffset() {
+  el.chart.style.paddingTop = Math.round(el.chart.clientHeight * PLAYHEAD_POS) + 'px';
+}
+// The chart's height can still be settling on the frame a song loads (the
+// variant bar appearing/disappearing resizes the grid row), so a single
+// measurement can be taken against a stale height. Re-apply on the next frame.
+function applyPlayheadOffsetSettled() {
+  applyPlayheadOffset();
+  requestAnimationFrame(applyPlayheadOffset);
+}
+
 function updateHighlight() {
-  const playheadY = el.chart.clientHeight * 0.12;
+  const playheadY = el.chart.clientHeight * PLAYHEAD_POS;
   const lines = el.chart.querySelectorAll('.line');
   const chartTop = el.chart.getBoundingClientRect().top;
   let active = -1;
+  let lastAbove = -1;
   for (let i = 0; i < lines.length; i++) {
+    if (lines[i].classList.contains('blank')) continue;   // spacers are never "the line you're on"
     const r = lines[i].getBoundingClientRect();
     const rel = { top: r.top - chartTop, bottom: r.bottom - chartTop };
     if (rel.top <= playheadY && rel.bottom >= playheadY) { active = i; }
+    if (rel.top <= playheadY) lastAbove = i;
   }
+  // Lines are separated by margins, so the read-line can fall in the gap
+  // between two of them — without this fallback the highlight would blink off
+  // every time it crossed a gap. Fall back to the last line at or above the
+  // read-line, which is the one you're still on.
+  if (active === -1) active = lastAbove;
   lines.forEach((l, i) => l.classList.toggle('active', i === active));
 }
 
@@ -4230,6 +4284,12 @@ if (tocCollapseBtn) tocCollapseBtn.addEventListener('click', collapseSidebar);
 if (setlistToggle) setlistToggle.addEventListener('click', (e) => { e.stopPropagation(); toggleSidebar(); });
 // Re-sync the highlight on resize / orientation change (mobile drawer vs desktop grid).
 window.addEventListener('resize', updateSetlistToggle);
+// The read-line offset is a fraction of the chart's height, so it has to be
+// recomputed whenever that height changes (rotation, Safari chrome show/hide).
+window.addEventListener('resize', () => {
+  applyPlayheadOffset();
+  updateHighlight();
+});
 updateSetlistToggle();
 
 // Keyboard shortcuts
@@ -4302,7 +4362,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260731a';
+const SW_BUILD = '20260731c';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
