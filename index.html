@@ -3673,7 +3673,6 @@ function loadSong(setIdx, songIdx) {
   renderVariantBar();
   renderChart();
   renderTOC();
-  applyPlayheadOffset();   // before calibration — it changes scrollHeight
   el.chart.scrollTop = 0;
   state.virtualScroll = 0;
 
@@ -3687,12 +3686,8 @@ function loadSong(setIdx, songIdx) {
     applySliderSpeed();
   }
   // One-shot paint of the read-line highlight + progress (the rAF loop only
-  // runs while playing, so nothing else refreshes these until then). Re-apply
-  // the read-line offset here too: the synchronous call above can run before
-  // the grid has finished resizing (e.g. the variant bar appearing or
-  // disappearing between songs changes the chart's height), which would leave
-  // the padding computed against a stale height.
-  requestAnimationFrame(() => { applyPlayheadOffsetSettled(); updateHighlight(); updateProgress(); });
+  // runs while playing, so nothing else refreshes these until then).
+  requestAnimationFrame(() => { updateHighlight(); updateProgress(); });
 }
 
 // Derive the per-song auto-fit speed once layout has settled. Retries across
@@ -3700,7 +3695,6 @@ function loadSong(setIdx, songIdx) {
 // can lag a frame or two), so calibration never silently falls back.
 function calibrateScrollBase(song, tries) {
   tries = tries || 0;
-  applyPlayheadOffset();   // padding is part of scrollHeight — set it before measuring
   const scrollable = el.chart.scrollHeight - el.chart.clientHeight;
   if (scrollable > 0) {
     state.autoFitSpeed = scrollable / song.durationSec;
@@ -3999,40 +3993,45 @@ function escapeHtml(s) {
 // high, everything you've just played is immediately off-screen and the song
 // appears to race past you.
 const PLAYHEAD_POS = 0.42;
+// Distance from the top of the chart to the first line (its CSS padding-top).
+const CHART_TOP_INSET = 16;
 
-// The first lines of a song start at the top of the chart, so with the
-// read-line at 42% they could never reach it — the opening lines would never
-// highlight. Pad the top by exactly the read-line offset so line 1 begins
-// sitting on the read-line, and every later line scrolls up through it.
-function applyPlayheadOffset() {
-  el.chart.style.paddingTop = Math.round(el.chart.clientHeight * PLAYHEAD_POS) + 'px';
-}
-// The chart's height can still be settling on the frame a song loads (the
-// variant bar appearing/disappearing resizes the grid row), so a single
-// measurement can be taken against a stale height. Re-apply on the next frame.
-function applyPlayheadOffsetSettled() {
-  applyPlayheadOffset();
-  requestAnimationFrame(applyPlayheadOffset);
+// At the start of a song nothing has scrolled yet, so the first lines sit
+// ABOVE the 42% read-line and could never be "the line you're on" — the
+// highlight would open on some line halfway down the screen. The earlier fix
+// for that was to pad the chart's top by 42%, but that padding IS the blank
+// gap above the first line, so it had to go.
+// Instead the read-line rides down with the scroll until it reaches 42% and
+// then stays there: at scrollTop 0 it sits on line 1, and it converges to
+// mid-screen within the first screenful. No gap, and no wrong line at the top.
+function playheadOffset() {
+  return Math.min(el.chart.clientHeight * PLAYHEAD_POS, el.chart.scrollTop + CHART_TOP_INSET);
 }
 
 function updateHighlight() {
-  const playheadY = el.chart.clientHeight * PLAYHEAD_POS;
+  const playheadY = playheadOffset();
   const lines = el.chart.querySelectorAll('.line');
   const chartTop = el.chart.getBoundingClientRect().top;
   let active = -1;
   let lastAbove = -1;
+  let firstReal = -1;
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].classList.contains('blank')) continue;   // spacers are never "the line you're on"
+    if (firstReal === -1) firstReal = i;
     const r = lines[i].getBoundingClientRect();
     const rel = { top: r.top - chartTop, bottom: r.bottom - chartTop };
     if (rel.top <= playheadY && rel.bottom >= playheadY) { active = i; }
     if (rel.top <= playheadY) lastAbove = i;
   }
-  // Lines are separated by margins, so the read-line can fall in the gap
-  // between two of them — without this fallback the highlight would blink off
-  // every time it crossed a gap. Fall back to the last line at or above the
-  // read-line, which is the one you're still on.
-  if (active === -1) active = lastAbove;
+  // Two fallbacks, both needed:
+  // 1. Lines are separated by margins, so the read-line regularly lands in the
+  //    gap between two of them — without this the highlight would blink off
+  //    every time it crossed a gap. Use the last line at or above it.
+  // 2. At the very top of a song the first line sits just below the read-line
+  //    (its own margin puts it there), so nothing is at or above it at all.
+  //    Fall back to the first real line — at the start of a song, you're on
+  //    line one.
+  if (active === -1) active = lastAbove !== -1 ? lastAbove : firstReal;
   lines.forEach((l, i) => l.classList.toggle('active', i === active));
 }
 
@@ -4284,12 +4283,11 @@ if (tocCollapseBtn) tocCollapseBtn.addEventListener('click', collapseSidebar);
 if (setlistToggle) setlistToggle.addEventListener('click', (e) => { e.stopPropagation(); toggleSidebar(); });
 // Re-sync the highlight on resize / orientation change (mobile drawer vs desktop grid).
 window.addEventListener('resize', updateSetlistToggle);
-// The read-line offset is a fraction of the chart's height, so it has to be
-// recomputed whenever that height changes (rotation, Safari chrome show/hide).
-window.addEventListener('resize', () => {
-  applyPlayheadOffset();
-  updateHighlight();
-});
+// The read-line is a fraction of the chart's height, so the highlight has to
+// be re-evaluated whenever that height changes (rotation, Safari chrome
+// showing/hiding). playheadOffset() reads the height live, so this just
+// re-runs the check.
+window.addEventListener('resize', updateHighlight);
 updateSetlistToggle();
 
 // Keyboard shortcuts
@@ -4362,7 +4360,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260731c';
+const SW_BUILD = '20260731d';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {

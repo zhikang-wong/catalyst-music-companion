@@ -1,6 +1,6 @@
 // Catalyst Music Companion — offline service worker
 // Bump CACHE_VERSION whenever index.html or assets change to force refresh.
-const CACHE_VERSION = "catalyst-v33-2026-07-31c";
+const CACHE_VERSION = "catalyst-v34-2026-07-31d";
 
 const PRECACHE = [
   "./",
