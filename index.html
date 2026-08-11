@@ -44,7 +44,7 @@
        Chrome-only — never enters the chart, so it never has to survive
        sitting inside the now-playing field. */
     --accent-fill: #B92E08;
-    --chord: #CC0066;         /* hot pink, chart-only text — 5.31:1 on paper; 3.18:1 inside the gold now-field, which is the large-text floor, and legal only because FONT_SIZE_MIN keeps chords ≥19px bold (see FONT_SIZE_MIN) */
+    --chord: #CC0066;         /* hot pink, chart-only text — 5.31:1 on paper. Inside the gold now-field it's only 3.18:1, so the active line overrides it with a deeper pink (see `.line.active .chord-row`) rather than constraining the font size. */
     --section: #231610;       /* section headers speak in ink; a header can itself become the now-line, where pink text would drop well below AA */
     --now: #F4BB00;           /* bright gold — "right now". Chart active line + sidebar current song, nowhere else. */
     --set-band: #E1DED3;      /* cream, one step down — sidebar set-title band */
@@ -685,6 +685,20 @@
      characters horizontally. */
   .chord-row { color: var(--chord); font-weight: 700; white-space: pre; line-height: 1.15; }
   .lyric-row { white-space: pre; line-height: 1.35; }
+  /* Chords on the active line sit on the gold field, where the bright pink
+     only reaches 3.18:1. This deeper pink clears AA (4.86:1) at ANY font
+     size, which is what lets the font-size control have a full range —
+     previously the range was crippled to keep chords large enough for the
+     3:1 large-text exemption. Bright pink stays everywhere else (5.31:1 on
+     paper), which is the overwhelming majority of the chart. */
+  .line.active .chord-row,
+  .line.active .chord-row .chord-token { color: #99004D; }
+  /* A line with no chords has no column alignment to protect, so it can wrap
+     freely instead of running off the right edge. Lines that DO carry chords
+     still can't wrap — the chord row is positioned by monospace character
+     count — so those rely on the font-size control (and horizontal scroll as
+     a last resort). */
+  .line.no-chords .lyric-row { white-space: pre-wrap; overflow-wrap: anywhere; }
 
   /* Chord-only progression rows (Intro / Interlude / Outro etc.) —
      evenly-spaced chord chips instead of monospace-padded text. */
@@ -3430,22 +3444,28 @@ const SOURCE_VERSION = '20260729';
 
 // ----- Font size adjustment (persisted per device, not per song) -----------
 const FONT_SIZE_KEY = 'chartFontOffset';
-// Load-bearing, not arbitrary: --chord (hot pink) sits at 3.18:1 against the
-// gold now-playing field, which is the WCAG *large-text* floor (3:1) — legal
-// only while chords render ≥18.66px bold. -1 keeps the floor at 19px. Going
-// back to -4 would put chords at 16px inside that field, a straight AA fail.
-const FONT_SIZE_MIN = -1;
+// Wide enough to actually rescue a chart that's overflowing: chord/lyric rows
+// can't wrap (they're column-aligned), so shrinking the text is the real fix
+// for a line running off the right edge, and it has to have somewhere to go.
+// Range is roughly 14px → 38px on a wide iPad.
+// (This used to be capped at -1 to hold chords at ≥19px, because hot-pink
+// chords sitting on the gold now-playing field only cleared the WCAG
+// large-text floor. That traded a control you need mid-gig for a contrast
+// technicality — the contrast is now fixed at its source instead: chords on
+// the active line use a deeper pink that clears AA at any size. See
+// `.line.active .chord-row`.)
+const FONT_SIZE_MIN = -16;
 const FONT_SIZE_MAX = 8;
-// Clamped on read, not just on click — a device that stored -4 under the old
-// wider range would otherwise reload straight back into the failing size.
 let fontSizeOffset = Math.min(FONT_SIZE_MAX, Math.max(FONT_SIZE_MIN,
   parseInt(localStorage.getItem(FONT_SIZE_KEY) || '0', 10) || 0));
 
 function applyFontSize() {
-  // Base clamp is clamp(20px, 2.2vw+8px, 30px) — sized to be glanceable from a
-  // few feet away on an iPad stand, not desk-reading distance; offset shifts min/max.
-  const min = 20 + fontSizeOffset;
+  // The vw term dominates on an iPad, so the clamp's MAX is what you actually
+  // get — each press moves the rendered size by 1px. The min is kept
+  // proportional (and never below 12px) so narrow screens don't collapse to
+  // an unreadable size when the offset is pushed right down.
   const max = 30 + fontSizeOffset;
+  const min = Math.max(12, Math.min(20 + fontSizeOffset, max));
   el.chart.style.fontSize = `clamp(${min}px, 2.2vw + ${8 + fontSizeOffset}px, ${max}px)`;
   el.fontDecBtn.disabled = fontSizeOffset <= FONT_SIZE_MIN;
   el.fontIncBtn.disabled = fontSizeOffset >= FONT_SIZE_MAX;
@@ -3972,6 +3992,10 @@ function renderChart() {
         chordRow.className = 'chord-row';
         chordRow.textContent = chordLine || ' ';
         lineDiv.appendChild(chordRow);
+      } else {
+        // No chord row above it, so nothing to stay column-aligned with —
+        // this line is free to wrap rather than overflow. (See .no-chords.)
+        lineDiv.classList.add('no-chords');
       }
       const lyricRow = document.createElement('div');
       lyricRow.className = 'lyric-row';
@@ -4360,7 +4384,7 @@ loadSong(0, 0);
 
 // Offline support — register service worker (no-op on file:// or unsupported browsers)
 // Cache-bust sw.js URL so Safari on iOS always fetches the latest version.
-const SW_BUILD = '20260731d';
+const SW_BUILD = '20260801a';
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js?v=' + SW_BUILD).catch((err) => {
